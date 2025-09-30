@@ -1,0 +1,167 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 String         @id @default(uuid())
+  createdDate        DateTime       @default(now()) @map("created_date")
+  updatedDate        DateTime       @default(now()) @map("updated_date")
+  createdBy          String?        @map("created_by")
+  fullName           String         @map("full_name")
+  email              String         @unique
+  role               String         @default("user")
+  tipoUsuario        String         @default("cliente") @map("tipo_usuario")
+  nome               String?
+  sobrenome          String?
+  telefone           String?
+  nif                String?
+  dataNascimento     DateTime?      @map("data_nascimento")
+  fotoUrl            String?        @map("foto_url")
+  status             String         @default("ativo")
+  restaurantId       String?        @map("restaurant_id")
+  passwordHash       String?        @map("password_hash")
+  consentimentoDados Boolean        @default(false) @map("consentimento_dados")
+  enderecosSalvos    Json           @default("[]") @map("enderecos_salvos")
+  metodosPagamento   Json           @default("[]") @map("metodos_pagamento_salvos")
+  entregador         Entregador?
+  refreshTokens      RefreshToken[]
+  restaurant         Restaurant?    @relation(fields: [restaurantId], references: [id])
+
+  @@map("users")
+}
+
+model Restaurant {
+  id                   String     @id @default(uuid())
+  createdDate          DateTime   @default(now()) @map("created_date")
+  updatedDate          DateTime   @default(now()) @map("updated_date")
+  createdBy            String?    @map("created_by")
+  nome                 String
+  descricao            String?
+  categoria            String?
+  endereco             String
+  cidade               String
+  codigoPostal         String?    @map("codigo_postal")
+  telefone             String?
+  email                String?
+  website              String?
+  horarioFuncionamento String?    @map("horario_funcionamento")
+  tempoEntrega         Int?       @map("tempo_entrega")
+  taxaEntrega          Float?     @map("taxa_entrega")
+  pedidoMinimo         Float?     @map("pedido_minimo")
+  ativo                Boolean    @default(true)
+  imagemUrl            String?    @map("imagem_url")
+  rating               Float?     @default(0)
+  totalAvaliacoes      Int        @default(0) @map("total_avaliacoes")
+  menuItems            MenuItem[]
+  orders               Order[]
+  users                User[]
+
+  @@map("restaurants")
+}
+
+model MenuItem {
+  id                    String     @id @default(uuid())
+  createdDate           DateTime   @default(now()) @map("created_date")
+  updatedDate           DateTime   @default(now()) @map("updated_date")
+  createdBy             String?    @map("created_by")
+  nome                  String
+  descricao             String?
+  categoria             String?
+  preco                 Float
+  disponivel            Boolean    @default(true)
+  imagemUrl             String?    @map("imagem_url")
+  ingredientes          Json?      @default("[]")
+  alergenos             Json?      @default("[]")
+  calorias              Int?
+  tempoPreparo          Int?       @map("tempo_preparo")
+  ordem                 Int?       @default(0)
+  restaurantId          String     @map("restaurant_id")
+  adicionais            Json?      @default("[]")
+  opcoes_personalizacao Json?      @default("[]") @map("personalization_opts")
+  restaurant            Restaurant @relation(fields: [restaurantId], references: [id])
+
+  @@map("menu_items")
+}
+
+model Order {
+  id              String     @id @default(uuid())
+  createdDate     DateTime   @default(now()) @map("created_date")
+  updatedDate     DateTime   @default(now()) @map("updated_date")
+  createdBy       String?    @map("created_by")
+  numeroPedido    String     @unique @map("numero_pedido")
+  status          String     @default("pendente")
+  clienteNome     String     @map("cliente_nome")
+  clienteEmail    String     @map("cliente_email")
+  clienteTelefone String?    @map("cliente_telefone")
+  enderecoEntrega Json       @map("endereco_entrega")
+  itens           Json
+  subtotal        Decimal   @db.Decimal(10, 2)
+  taxaEntrega     Decimal   @db.Decimal(10, 2) @map("taxa_entrega")
+  taxaServico     Decimal?  @db.Decimal(10, 2) @map("taxa_servico")
+  desconto        Decimal?  @db.Decimal(10, 2) @default(0)
+  total           Decimal   @db.Decimal(10, 2)
+  metodoPagamento String     @map("metodo_pagamento")
+  valorPago       Decimal?   @db.Decimal(10, 2) @map("valor_pago")
+  troco           Decimal?   @db.Decimal(10, 2) @default(0)
+  bandeiraCartao  String?    @map("bandeira_cartao")
+  finalCartao     String?    @map("final_cartao")
+  nomeTitular     String?    @map("nome_titular")
+  observacoes     String?
+  dataEntrega     DateTime?  @map("data_entrega")
+  restaurantId    String     @map("restaurant_id")
+  restaurant      Restaurant @relation(fields: [restaurantId], references: [id])
+
+  @@map("orders")
+}
+
+model Entregador {
+  id             String   @id @default(uuid())
+  createdDate    DateTime @default(now()) @map("created_date")
+  updatedDate    DateTime @default(now()) @map("updated_date")
+  createdBy      String?  @map("created_by")
+  nomeCompleto   String   @map("nome_completo")
+  email          String   @unique
+  telefone       String
+  cpf            String   @unique
+  dataNascimento DateTime @map("data_nascimento")
+  endereco       String
+  cidade         String
+  codigoPostal   String?  @map("codigo_postal")
+  veiculo        String
+  placa          String?
+  status         String   @default("ativo")
+  avaliacao      Float?   @default(0)
+  totalEntregas  Int      @default(0) @map("total_entregas")
+  userId         String   @unique @map("user_id")
+  user           User     @relation(fields: [userId], references: [id])
+
+  @@map("entregadores")
+}
+
+model Cart {
+  id           String   @id @default(uuid())
+  createdDate  DateTime @default(now()) @map("created_date")
+  updatedDate  DateTime @default(now()) @map("updated_date")
+  sessionId    String   @map("session_id")
+  restaurantId String   @map("restaurant_id")
+  itens        Json     @default("[]")
+  subtotal     Float    @default(0)
+
+  @@map("carts")
+}
+
+model RefreshToken {
+  id          String   @id @default(uuid())
+  token       String   @unique
+  userId      String   @map("user_id")
+  expiresAt   DateTime @map("expires_at")
+  createdDate DateTime @default(now()) @map("created_date")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+}

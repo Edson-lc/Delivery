@@ -1,0 +1,35 @@
+﻿import { Router } from 'express';
+import restaurantsRouter from './restaurants';
+import menuItemsRouter from './menu-items';
+import ordersRouter from './orders';
+import cartsRouter from './carts';
+import customersRouter from './customers';
+import entregadoresRouter from './entregadores';
+import deliveriesRouter from './deliveries';
+import alteracoesPerfilRouter from './alteracoes-perfil';
+import usersRouter from './users';
+import authRouter from './auth';
+import publicRouter from './public';
+import authenticate from '../middleware/authenticate';
+import requireRole from '../middleware/require-role';
+
+const router = Router();
+
+// Rotas pÃºblicas (sem autenticaÃ§Ã£o)
+router.use('/public', publicRouter);
+router.use('/auth', authRouter);
+
+// Rotas protegidas (com autenticaÃ§Ã£o)
+router.use(authenticate);
+
+router.use('/restaurants', requireRole(['admin', 'restaurante']), restaurantsRouter);
+router.use('/menu-items', requireRole(['admin', 'restaurante']), menuItemsRouter);
+router.use('/orders', requireRole(['admin', 'restaurante', 'entregador', 'cliente', 'user']), ordersRouter);
+router.use('/carts', requireRole(['admin']), cartsRouter);
+router.use('/customers', requireRole(['admin', 'restaurante', 'cliente', 'user']), customersRouter);
+router.use('/entregadores', requireRole(['admin']), entregadoresRouter);
+router.use('/deliveries', requireRole(['admin', 'entregador']), deliveriesRouter);
+router.use('/alteracoes-perfil', requireRole(['admin']), alteracoesPerfilRouter);
+router.use('/users', requireRole(['admin', 'restaurante', 'entregador', 'cliente', 'user']), usersRouter);
+
+export default router;

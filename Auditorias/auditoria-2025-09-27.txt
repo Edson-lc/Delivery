@@ -1,0 +1,46 @@
+﻿Auditoria Técnica - AmaDelivery
+Data: 2025-09-27
+
+Visão Geral
+- Arquitetura full-stack bem organizada (React + Express/Prisma) com separação clara entre frontend (`src/`) e backend (`server/`).
+- Pipelines GitHub Actions executam lint, testes de backend, build e varredura Trivy.
+- Documentação extensa (`README.md`, `docs/`), mas com problemas de encoding.
+- Código usa libs modernas (React Query, shadcn/ui, Zod, Winston), carecendo de padronização consistente.
+
+Achados Críticos
+1. Validação de ambiente impede bootstrap em desenvolvimento: `server/src/env.ts` exige `JWT_SECRET` válido antes de aplicar fallback. Resultado: serviço não sobe sem configurar segredo de 32 caracteres.
+2. Falta de controle de autorização por perfil. Após autenticação qualquer token acessa rotas administrativas (`server/src/routes/index.ts`). Recomenda-se RBAC com `require-scope`.
+3. Backend aceita valores financeiros enviados pelo cliente (`server/src/routes/orders.ts`, `server/src/routes/public.ts`), permitindo fraude. Subtotal, taxas e total devem ser recalculados no servidor.
+4. Endpoints públicos de carrinho (`server/src/routes/public.ts`) expondo dados por aceitar `sessionId` arbitrário sem TTL, rate limiting ou binding ao dispositivo.
+5. `sanitizeInput` (`server/src/middleware/security.ts`) altera formas/tipos de payload removendo caracteres arbitrários e limitando a 1000 chars, corrompendo dados válidos sem garantir segurança.
+6. Dockerfile não compila frontend: `npm ci --only=production` remove dependências de build (Vite), fazendo `npm run build` falhar.
+
+Recomendações Backend
+- Aplicar Zod a todas rotas (ex.: restaurantes e pedidos) e normalizar dados críticos.
+- Recalcular preços/valores e manter trilha de auditoria; nunca confiar em subtotal/total do cliente.
+- Revisar carrinho público: usar identificador assinado (JWT curto/HMAC), expirar registros e limitar tentativas.
+- Substituir sanitização genérica por validação + escape contextual.
+- Implementar RBAC/escalas de permissão e logar ações sensíveis.
+- Expandir testes automatizados para fluxos de pedidos, carrinho, menus e cenários de fraude.
+
+Recomendações Frontend
+- Reestruturar roteamento com lazy loading, guards e tabela única de rotas (evitar duplicações em `src/pages/index.jsx`).
+- Tratar respostas não-JSON em `apiRequest` para evitar quebras, remover `console.log` e padronizar erro via toasts.
+- Normalizar cliente de carrinho para alinhar snake/camel case e estados (`adicionais` versus `adicionais_selecionados`).
+- Extrair hooks e componentes menores em telas grandes como `RestaurantMenu.jsx` (>200 linhas).
+- Reativar regras lint cruciais (`no-unused-vars`) e considerar migração gradual para TypeScript ou JSDoc.
+
+DevOps & Documentação
+- Ajustar Dockerfile para instalar dependências de build e servir artefatos estáticos adequadamente.
+- Remover Redis de `docker-compose.yml` ou implementar uso real (cache/sessões) respeitando `REDIS_URL`.
+- Corrigir encoding dos arquivos Markdown e atualizar documentação para novos endpoints públicos.
+- Adicionar testes frontend e upload automático de cobertura; manter secrets no pipeline e usar Codecov apenas se necessário.
+
+Próximos Passos
+- Corrigir bloqueios críticos (env fallback, cálculos financeiros, RBAC, build Docker).
+- Planejar sprint técnico para validações e refatoração de sanitização.
+- Implementar estratégia de RBAC e revisar endpoints públicos.
+- Criar roadmap para modularização do frontend e ampliar cobertura de testes.
+
+Conclusão
+Projeto apresenta base moderna, porém com riscos graves de segurança e integridade de dados. Priorizar correções críticas antes de evoluções funcionais, garantindo monitoramento, testes e controles de acesso robustos para viabilizar produção segura.

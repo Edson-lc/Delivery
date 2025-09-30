@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  # Banco de dados PostgreSQL para desenvolvimento
+  postgres:
+    image: postgres:15-alpine
+    container_name: amadelivery-db-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: amadelivery_dev
+      POSTGRES_USER: amadelivery
+      POSTGRES_PASSWORD: amadelivery_dev_password
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    networks:
+      - amadelivery-dev-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U amadelivery -d amadelivery_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis para desenvolvimento
+  redis:
+    image: redis:7-alpine
+    container_name: amadelivery-redis-dev
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_dev_data:/data
+    ports:
+      - "6380:6379"
+    networks:
+      - amadelivery-dev-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # Adminer para gerenciar o banco de dados
+  adminer:
+    image: adminer:latest
+    container_name: amadelivery-adminer
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    networks:
+      - amadelivery-dev-network
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+
+volumes:
+  postgres_dev_data:
+    driver: local
+  redis_dev_data:
+    driver: local
+
+networks:
+  amadelivery-dev-network:
+    driver: bridge
