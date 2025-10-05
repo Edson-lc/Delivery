@@ -1,0 +1,107 @@
+# Script para iniciar o AmaDelivery em modo de rede local
+# Execute este script para permitir acesso de outros dispositivos na sua rede
+
+Write-Host "🚀 Iniciando AmaDelivery em modo de rede local..." -ForegroundColor Green
+
+# Verificar se estamos no diretório correto
+if (-not (Test-Path "package.json")) {
+    Write-Host "❌ Execute este script na raiz do projeto AmaDelivery" -ForegroundColor Red
+    exit 1
+}
+
+# Obter IP da máquina (múltiplas tentativas)
+$ip = $null
+
+# Tentativa 1: PowerShell Get-NetIPAddress
+try {
+    $ip = (Get-NetIPAddress -AddressFamily IPv4 | Where-Object {$_.IPAddress -like "192.168.*" -or $_.IPAddress -like "10.*" -or $_.IPAddress -like "172.16.*"} | Select-Object -First 1).IPAddress
+} catch {
+    Write-Host "⚠️ Método 1 falhou, tentando método alternativo..." -ForegroundColor Yellow
+}
+
+# Tentativa 2: ipconfig
+if (-not $ip) {
+    try {
+        $ipconfig = ipconfig | Select-String "IPv4" | Select-String "192.168\|10\.\|172\.16" | Select-Object -First 1
+        if ($ipconfig) {
+            $ip = ($ipconfig -split ":")[1].Trim()
+        }
+    } catch {
+        Write-Host "⚠️ Método 2 falhou, tentando método alternativo..." -ForegroundColor Yellow
+    }
+}
+
+# Tentativa 3: Teste de conectividade
+if (-not $ip) {
+    try {
+        $testIPs = @("192.168.1.1", "192.168.0.1", "10.0.0.1")
+        foreach ($testIP in $testIPs) {
+            $ping = Test-Connection -ComputerName $testIP -Count 1 -Quiet
+            if ($ping) {
+                # Se conseguimos pingar o gateway, vamos tentar descobrir nosso IP
+                $ip = (Get-NetIPAddress -AddressFamily IPv4 | Where-Object {$_.IPAddress -like "192.168.*"} | Select-Object -First 1).IPAddress
+                break
+            }
+        }
+    } catch {
+        Write-Host "⚠️ Método 3 falhou" -ForegroundColor Yellow
+    }
+}
+
+if (-not $ip) {
+    Write-Host "❌ Não foi possível detectar o IP da rede local" -ForegroundColor Red
+    Write-Host "💡 Soluções:" -ForegroundColor Yellow
+    Write-Host "   1. Execute: .\scripts\solve-ip-issues.ps1" -ForegroundColor White
+    Write-Host "   2. Configure um IP fixo no seu roteador" -ForegroundColor White
+    Write-Host "   3. Execute este script novamente" -ForegroundColor White
+    exit 1
+}
+
+Write-Host "📍 IP detectado: $ip" -ForegroundColor Yellow
+
+# Criar arquivo .env.local se não existir
+if (-not (Test-Path ".env.local")) {
+    Write-Host "📝 Criando arquivo .env.local..." -ForegroundColor Blue
+    
+    $envContent = @"
+# Configuração para rede local
+VITE_API_URL=http://$ip`:4000/api
+"@
+    
+    $envContent | Out-File -FilePath ".env.local" -Encoding UTF8
+    Write-Host "✅ Arquivo .env.local criado" -ForegroundColor Green
+}
+
+# Verificar se o backend está rodando
+Write-Host "🔍 Verificando se o backend está rodando..." -ForegroundColor Blue
+
+try {
+    $response = Invoke-WebRequest -Uri "http://localhost:4000/api/public/restaurants" -Method GET -TimeoutSec 5
+    Write-Host "✅ Backend está rodando" -ForegroundColor Green
+} catch {
+    Write-Host "⚠️  Backend não está rodando. Inicie o backend primeiro:" -ForegroundColor Yellow
+    Write-Host "   cd server && npm run dev" -ForegroundColor Cyan
+    Write-Host ""
+}
+
+Write-Host "🌐 URLs de acesso:" -ForegroundColor Green
+Write-Host "   Frontend: http://$ip`:5173" -ForegroundColor Cyan
+Write-Host "   Backend:  http://$ip`:4000" -ForegroundColor Cyan
+Write-Host "   Local:    http://localhost:5173" -ForegroundColor Cyan
+Write-Host ""
+
+Write-Host "📱 Para acessar de outros dispositivos:" -ForegroundColor Yellow
+Write-Host "   1. Conecte o dispositivo na mesma rede Wi-Fi" -ForegroundColor White
+Write-Host "   2. Abra o navegador e acesse: http://$ip`:5173" -ForegroundColor White
+Write-Host ""
+
+Write-Host "🚀 Iniciando frontend em modo de rede..." -ForegroundColor Green
+npm run dev:network
+
+# Sugestões para problemas de IP dinâmico
+Write-Host ""
+Write-Host "💡 Se o IP mudar frequentemente:" -ForegroundColor Yellow
+Write-Host "   1. Execute: .\scripts\solve-ip-issues.ps1" -ForegroundColor White
+Write-Host "   2. Configure IP fixo: .\scripts\setup-fixed-ip.ps1" -ForegroundColor White
+Write-Host "   3. Use monitor automático: .\scripts\ip-monitor.ps1" -ForegroundColor White
+Write-Host ""

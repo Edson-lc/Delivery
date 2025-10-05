@@ -116,7 +116,7 @@ export default function AddressManager({ user, onUserUpdate }) {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1">
-                            <Label htmlFor="bairro">Bairro</Label>
+                            <Label htmlFor="bairro">Freguesia</Label>
                             <Input id="bairro" value={currentAddress.bairro} onChange={e => handleInputChange('bairro', e.target.value)} className="h-12" />
                         </div>
                         <div className="space-y-1">
@@ -196,13 +196,16 @@ export default function AddressManager({ user, onUserUpdate }) {
             
             {/* Modal de Confirmação de Exclusão */}
             <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-                <DialogContent className="sm:max-w-md">
+                <DialogContent className="sm:max-w-md" aria-describedby="delete-address-description">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2 text-red-600">
                             <AlertTriangle className="w-5 h-5" />
                             Confirmar Exclusão
                         </DialogTitle>
                     </DialogHeader>
+                    <div id="delete-address-description" className="sr-only">
+                        Confirmação para excluir o endereço selecionado
+                    </div>
                     <div className="space-y-4">
                         <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                             {addressToDelete && (

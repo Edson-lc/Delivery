@@ -215,10 +215,13 @@ export default function PaymentMethods({ user, onUserUpdate }) {
                             Novo Cartão
                         </Button>
                     </DialogTrigger>
-                    <DialogContent>
+                    <DialogContent aria-describedby="add-card-description">
                         <DialogHeader>
                             <DialogTitle>Adicionar Novo Cartão</DialogTitle>
                         </DialogHeader>
+                        <div id="add-card-description" className="sr-only">
+                            Formulário para adicionar um novo cartão de pagamento
+                        </div>
                         <PaymentForm onSave={handleSave} onCancel={() => setIsDialogOpen(false)} />
                     </DialogContent>
                 </Dialog>
@@ -265,13 +268,16 @@ export default function PaymentMethods({ user, onUserUpdate }) {
             
             {/* Modal de Confirmação de Exclusão */}
             <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-                <DialogContent className="sm:max-w-md">
+                <DialogContent className="sm:max-w-md" aria-describedby="delete-card-description">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2 text-red-600">
                             <AlertTriangle className="w-5 h-5" />
                             Confirmar Exclusão
                         </DialogTitle>
                     </DialogHeader>
+                    <div id="delete-card-description" className="sr-only">
+                        Confirmação para excluir o cartão de pagamento selecionado
+                    </div>
                     <div className="space-y-4">
                         <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                             {cardToDelete && (

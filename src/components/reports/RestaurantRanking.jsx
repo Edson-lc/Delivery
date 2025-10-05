@@ -146,7 +146,7 @@ export default function RestaurantRanking({ restaurants }) {
               { name: 'Fast Food Center', issue: 'Avaliação baixa (3.2)', action: 'Melhorar qualidade', severity: 'high' },
               { name: 'Comida Caseira', issue: 'Tempo de preparo alto (45 min)', action: 'Otimizar processos', severity: 'medium' },
               { name: 'Lanchonete da Esquina', issue: 'Queda de pedidos (-15%)', action: 'Revisar cardápio/preços', severity: 'high' },
-              { name: 'Pizzaria do Bairro', issue: 'Muitos cancelamentos (8%)', action: 'Investigar problemas', severity: 'medium' }
+              { name: 'Pizzaria da Freguesia', issue: 'Muitos cancelamentos (8%)', action: 'Investigar problemas', severity: 'medium' }
             ].map((restaurant, index) => (
               <div key={index} className={`p-3 rounded-lg border-l-4 ${
                 restaurant.severity === 'high' ? 'bg-red-50 border-red-500' : 'bg-yellow-50 border-yellow-500'

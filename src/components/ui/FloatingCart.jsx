@@ -16,12 +16,9 @@ const FloatingCart = ({ isVisible, onAnimationComplete, cart, onCartClick, anima
       // Esconder animação após 1.5s
              const hideTimer = setTimeout(() => {
                setShowCheck(false);
-               // Aguardar transição antes de esconder completamente
-               setTimeout(() => {
-                 setIsAnimating(false);
-                 onAnimationComplete();
-               }, 500);
-             }, 1200);
+               setIsAnimating(false);
+               onAnimationComplete();
+             }, 1500);
 
       return () => {
         clearTimeout(checkTimer);
@@ -57,7 +54,7 @@ const FloatingCart = ({ isVisible, onAnimationComplete, cart, onCartClick, anima
         
         {/* Check de confirmação */}
                {showCheck && (
-                 <div className="absolute -top-2 -right-2 bg-green-500 text-white p-2 rounded-full shadow-lg animate-pulse transition-opacity duration-500 ease-in-out">
+                 <div className="absolute -top-2 -right-2 bg-green-500 text-white p-2 rounded-full shadow-lg animate-pulse">
                    <Check className="w-4 h-4" />
                  </div>
                )}

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teste Simples - AmaDelivery</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test { margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Teste de Conectividade - AmaDelivery</h1>
+    
+    <div class="info">
+        <h3>📊 Informações do Sistema</h3>
+        <p><strong>URL Atual:</strong> <span id="currentUrl"></span></p>
+        <p><strong>Hostname:</strong> <span id="hostname"></span></p>
+        <p><strong>User Agent:</strong> <span id="userAgent"></span></p>
+        <p><strong>Timestamp:</strong> <span id="timestamp"></span></p>
+    </div>
+
+    <div class="test" id="test1">
+        <h3>🔍 Teste 1: Frontend (Vite)</h3>
+        <p>Status: <span id="frontendStatus">Testando...</span></p>
+    </div>
+
+    <div class="test" id="test2">
+        <h3>🔍 Teste 2: Backend Local</h3>
+        <p>Status: <span id="backendLocalStatus">Testando...</span></p>
+        <p>Resposta: <span id="backendLocalResponse"></span></p>
+    </div>
+
+    <div class="test" id="test3">
+        <h3>🔍 Teste 3: Backend Rede Local</h3>
+        <p>Status: <span id="backendNetworkStatus">Testando...</span></p>
+        <p>Resposta: <span id="backendNetworkResponse"></span></p>
+    </div>
+
+    <div class="test" id="test4">
+        <h3>🔍 Teste 4: API Restaurantes</h3>
+        <p>Status: <span id="apiStatus">Testando...</span></p>
+        <p>Dados: <span id="apiResponse"></span></p>
+    </div>
+
+    <script>
+        // Informações do sistema
+        document.getElementById('currentUrl').textContent = window.location.href;
+        document.getElementById('hostname').textContent = window.location.hostname;
+        document.getElementById('userAgent').textContent = navigator.userAgent;
+        document.getElementById('timestamp').textContent = new Date().toLocaleString();
+
+        // Função para atualizar status
+        function updateStatus(elementId, status, isSuccess, response = '') {
+            const element = document.getElementById(elementId);
+            const container = element.closest('.test');
+            
+            element.textContent = status;
+            container.className = 'test ' + (isSuccess ? 'success' : 'error');
+            
+            if (response) {
+                const responseElement = container.querySelector('[id$="Response"]');
+                if (responseElement) {
+                    responseElement.textContent = response;
+                }
+            }
+        }
+
+        // Teste 1: Frontend
+        updateStatus('frontendStatus', '✅ Frontend carregado com sucesso', true);
+
+        // Teste 2: Backend Local
+        fetch('http://localhost:4000/api/public/restaurants')
+            .then(response => {
+                if (response.ok) {
+                    updateStatus('backendLocalStatus', '✅ Backend local funcionando', true, 'Status: ' + response.status);
+                } else {
+                    updateStatus('backendLocalStatus', '❌ Backend local com erro', false, 'Status: ' + response.status);
+                }
+            })
+            .catch(error => {
+                updateStatus('backendLocalStatus', '❌ Backend local inacessível', false, error.message);
+            });
+
+        // Teste 3: Backend Rede Local
+        fetch('http://192.168.1.229:4000/api/public/restaurants')
+            .then(response => {
+                if (response.ok) {
+                    updateStatus('backendNetworkStatus', '✅ Backend rede local funcionando', true, 'Status: ' + response.status);
+                } else {
+                    updateStatus('backendNetworkStatus', '❌ Backend rede local com erro', false, 'Status: ' + response.status);
+                }
+            })
+            .catch(error => {
+                updateStatus('backendNetworkStatus', '❌ Backend rede local inacessível', false, error.message);
+            });
+
+        // Teste 4: API Restaurantes
+        fetch('http://192.168.1.229:4000/api/public/restaurants')
+            .then(response => response.json())
+            .then(data => {
+                updateStatus('apiStatus', '✅ API restaurantes funcionando', true, data.length + ' restaurantes encontrados');
+            })
+            .catch(error => {
+                updateStatus('apiStatus', '❌ API restaurantes com erro', false, error.message);
+            });
+    </script>
+</body>
+</html>

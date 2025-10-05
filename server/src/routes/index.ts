@@ -15,7 +15,7 @@ import requireRole from '../middleware/require-role';
 
 const router = Router();
 
-// Rotas pÃºblicas (sem autenticaÃ§Ã£o)
+// Rotas públicas (sem autenticação)
 router.use('/public', publicRouter);
 router.use('/auth', authRouter);
 

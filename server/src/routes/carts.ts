@@ -83,13 +83,48 @@ router.put('/:id', async (req, res, next) => {
     const { id } = req.params;
     const data = req.body ?? {};
 
+    // Verificar se o carrinho existe
+    const existingCart = await prisma.cart.findUnique({ where: { id } });
+    if (!existingCart) {
+      return res.status(404).json(buildErrorPayload('CART_NOT_FOUND', 'Carrinho não encontrado.'));
+    }
+
+    // Validar dados obrigatórios
+    if (data.sessionId && data.sessionId !== existingCart.sessionId) {
+      return res.status(400).json(buildErrorPayload('VALIDATION_ERROR', 'sessionId não pode ser alterado.'));
+    }
+
+    // Calcular subtotal se itens foram fornecidos
+    let updateData: any = {};
+    
+    // Mapear campos do frontend para o schema do banco
+    if (data.itens !== undefined) updateData.itens = data.itens;
+    if (data.subtotal !== undefined) updateData.subtotal = data.subtotal;
+    if (data.sessionId !== undefined) updateData.sessionId = data.sessionId;
+    if (data.restaurantId !== undefined) updateData.restaurantId = data.restaurantId;
+    
+    // Calcular subtotal se itens foram fornecidos
+    if (data.itens && Array.isArray(data.itens)) {
+      const subtotal = data.itens.reduce((total, item) => {
+        const itemTotal = (item.preco_unitario || 0) * (item.quantidade || 0);
+        const adicionaisTotal = (item.adicionais_selecionados || []).reduce((sum, add) => sum + (add.preco || 0), 0) * (item.quantidade || 0);
+        const personalizacoesTotal = (item.preco_personalizacoes || 0) * (item.quantidade || 0);
+        return total + itemTotal + adicionaisTotal + personalizacoesTotal;
+      }, 0);
+      updateData.subtotal = Math.round(subtotal * 100) / 100;
+    }
+
+    // Adicionar timestamp de atualização
+    updateData.updatedDate = new Date();
+
     const cart = await prisma.cart.update({
       where: { id },
-      data,
+      data: updateData,
     });
 
     res.json(serialize(cart));
   } catch (error) {
+    console.error('Erro ao atualizar carrinho:', error);
     next(error);
   }
 });

@@ -81,21 +81,26 @@ router.post('/', async (req, res, next) => {
       descricao,
       categoria,
       endereco,
+      cidade,
       telefone,
       email,
+      tempo_preparo,
       tempoPreparo,
+      taxa_entrega,
       taxaEntrega,
+      valor_minimo,
       valorMinimo,
       status,
       avaliacao,
+      imagem_url,
       imagemUrl,
       horarioFuncionamento,
     } = req.body ?? {};
 
-    if (!nome || !endereco || !telefone) {
+    if (!nome || !endereco || !telefone || !cidade) {
       return res
         .status(400)
-        .json(buildErrorPayload('VALIDATION_ERROR', 'nome, endereco e telefone são obrigatórios.'));
+        .json(buildErrorPayload('VALIDATION_ERROR', 'nome, endereco, telefone e cidade são obrigatórios.'));
     }
 
     const restaurant = await prisma.restaurant.create({
@@ -104,14 +109,16 @@ router.post('/', async (req, res, next) => {
         descricao,
         categoria,
         endereco,
+        cidade,
         telefone,
         email,
-        tempoEntrega: tempoPreparo,
-        taxaEntrega,
-        pedidoMinimo: valorMinimo,
-        ativo: status === 'ativo',
-        rating: avaliacao,
-        imagemUrl,
+        tempoPreparo: tempo_preparo ?? tempoPreparo ?? 30,
+        taxaEntrega: taxa_entrega ?? taxaEntrega ?? 5.00,
+        valorMinimo: valor_minimo ?? valorMinimo ?? pedidoMinimo ?? 20.00,
+        status: status || 'ativo',
+        open: true,
+        rating: avaliacao ?? 0,
+        imagemUrl: imagem_url ?? imagemUrl,
         horarioFuncionamento,
       },
     });
@@ -125,7 +132,38 @@ router.post('/', async (req, res, next) => {
 router.put('/:id', async (req, res, next) => {
   try {
     const { id } = req.params;
-    const data = req.body ?? {};
+    const rawData = req.body ?? {};
+
+    // Mapear campos do frontend para o modelo
+    const data: Record<string, any> = {};
+    
+    if (rawData.nome !== undefined) data.nome = rawData.nome;
+    if (rawData.descricao !== undefined) data.descricao = rawData.descricao;
+    if (rawData.categoria !== undefined) data.categoria = rawData.categoria;
+    if (rawData.endereco !== undefined) data.endereco = rawData.endereco;
+    if (rawData.cidade !== undefined) data.cidade = rawData.cidade;
+    if (rawData.telefone !== undefined) data.telefone = rawData.telefone;
+    if (rawData.email !== undefined) data.email = rawData.email;
+    if (rawData.tempoPreparo !== undefined) data.tempoPreparo = rawData.tempoPreparo;
+    if (rawData.tempo_preparo !== undefined) data.tempoPreparo = rawData.tempo_preparo;
+    if (rawData.taxaEntrega !== undefined) data.taxaEntrega = rawData.taxaEntrega;
+    if (rawData.taxa_entrega !== undefined) data.taxaEntrega = rawData.taxa_entrega;
+    if (rawData.pedidoMinimo !== undefined) data.valorMinimo = rawData.pedidoMinimo;
+    if (rawData.valor_minimo !== undefined) data.valorMinimo = rawData.valor_minimo;
+    if (rawData.valorMinimo !== undefined) data.valorMinimo = rawData.valorMinimo;
+    if (rawData.imagemUrl !== undefined) data.imagemUrl = rawData.imagemUrl;
+    if (rawData.imagem_url !== undefined) data.imagemUrl = rawData.imagem_url;
+    if (rawData.horarioFuncionamento !== undefined) data.horarioFuncionamento = rawData.horarioFuncionamento;
+    if (rawData.rating !== undefined) data.rating = rawData.rating;
+    if (rawData.avaliacao !== undefined) data.rating = rawData.avaliacao;
+    
+    // Mapear status e open
+    if (rawData.status !== undefined) {
+      data.status = rawData.status;
+    }
+    if (rawData.open !== undefined) {
+      data.open = rawData.open;
+    }
 
     const restaurant = await prisma.restaurant.update({
       where: { id },

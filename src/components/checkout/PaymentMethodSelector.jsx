@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CreditCard, Plus, Banknote, Loader2 } from 'lucide-react';
+import { CreditCard, Plus, Banknote, Loader2, CheckCircle } from 'lucide-react';
 import CardBrandIcon from '@/components/ui/CardBrandIcon';
 
 export default function PaymentMethodSelector({ 
@@ -20,6 +20,13 @@ export default function PaymentMethodSelector({
   const { refreshUser } = useAuth();
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [cashAmount, setCashAmount] = useState('');
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  
+  // Limite máximo para pagamento em dinheiro
+  const CASH_PAYMENT_LIMIT = 30;
+  
+  // Notas não permitidas para facilitar o troco
+  const FORBIDDEN_NOTES = [100, 200, 500];
   const [newCard, setNewCard] = useState({
     bandeira: 'Visa',
     final_cartao: '',
@@ -27,6 +34,39 @@ export default function PaymentMethodSelector({
     validade: ''
   });
   const [isSaving, setIsSaving] = useState(false);
+
+  // Função para formatar valor monetário
+  const formatCurrencyValue = (value) => {
+    if (!value || value.trim() === '') return '';
+    
+    // Remove tudo que não é número, vírgula ou ponto
+    const cleanValue = value.replace(/[^\d,.]/g, '');
+    
+    // Se tem vírgula e ponto, manter apenas o último
+    const parts = cleanValue.split(/[,.]/);
+    if (parts.length > 2) {
+      // Se tem mais de 2 partes, manter apenas as duas primeiras
+      return parts[0] + ',' + parts[1];
+    }
+    
+    // Se tem apenas números, permitir valores maiores sem formatação automática
+    if (parts.length === 1) {
+      return cleanValue; // Deixar o usuário digitar livremente
+    }
+    
+    return cleanValue;
+  };
+
+  // Função para converter valor formatado para número
+  const parseCurrencyValue = (value) => {
+    if (!value || value.trim() === '') return 0;
+    
+    // Converter vírgula para ponto
+    const normalizedValue = value.replace(',', '.');
+    const amount = parseFloat(normalizedValue);
+    
+    return isNaN(amount) ? 0 : amount;
+  };
 
   // Verificação de segurança para user
   if (!user) {
@@ -81,23 +121,100 @@ export default function PaymentMethodSelector({
     setIsSaving(false);
   };
 
-  const handleCashPayment = () => {
-    const amount = parseFloat(cashAmount);
+  const handleCashAmountChange = (value) => {
+    // Formatar o valor automaticamente
+    const formattedValue = formatCurrencyValue(value);
+    setCashAmount(formattedValue);
+    
+    // Se o campo estiver vazio, usar valor mínimo
+    if (!formattedValue || formattedValue.trim() === '') {
+      const paymentData = {
+        tipo: 'dinheiro',
+        valor_pago: totalAmount,
+        troco: 0
+      };
+      
+      console.log("=== DEBUG VALOR VAZIO - USANDO MÍNIMO ===");
+      console.log("Payment Data:", paymentData);
+      
+      onPaymentMethodSelect(paymentData);
+      return;
+    }
+    
+    // Converter valor formatado para número
+    const amount = parseCurrencyValue(formattedValue);
+    
+    // Verificar se é um número válido
+    if (amount <= 0) {
+      console.log("=== DEBUG VALOR INVÁLIDO ===");
+      return;
+    }
+    
+    // Verificar se é uma nota não permitida
+    if (isForbiddenNote(amount)) {
+      console.log("=== DEBUG NOTA NÃO PERMITIDA ===");
+      console.log("Valor inserido:", value);
+      console.log("Amount:", amount);
+      console.log("Notas não permitidas:", FORBIDDEN_NOTES);
+      return; // Não permitir confirmação
+    }
+    
+    // Confirmar automaticamente quando o valor for válido
     if (amount >= totalAmount) {
-      onPaymentMethodSelect({
+      const paymentData = {
         tipo: 'dinheiro',
         valor_pago: amount,
         troco: amount - totalAmount
-      });
+      };
+      
+      // Debug: Log dos dados de pagamento
+      console.log("=== DEBUG PAYMENT METHOD SELECTOR ===");
+      console.log("Valor inserido:", value);
+      console.log("Valor formatado:", formattedValue);
+      console.log("Amount:", amount);
+      console.log("Total Amount:", totalAmount);
+      console.log("Payment Data:", paymentData);
+      
+      onPaymentMethodSelect(paymentData);
+      
+      // Mostrar confirmação temporariamente
+      setShowConfirmation(true);
+      setTimeout(() => {
+        setShowConfirmation(false);
+      }, 3000); // Desaparece após 3 segundos
+    } else {
+      // Se valor for menor que o mínimo, mostrar erro mas não alterar automaticamente
+      console.log("=== DEBUG VALOR INSUFICIENTE ===");
+      console.log("Valor inserido:", value);
+      console.log("Valor formatado:", formattedValue);
+      console.log("Amount:", amount);
+      console.log("Total Amount:", totalAmount);
+      
+      // Não alterar o pagamento automaticamente, deixar o usuário corrigir
     }
   };
 
   const calculateChange = () => {
-    const amount = parseFloat(cashAmount);
+    if (!cashAmount || cashAmount.trim() === '') {
+      return '0.00';
+    }
+    
+    const amount = parseCurrencyValue(cashAmount);
+    
+    if (amount <= 0) {
+      return '0.00';
+    }
+    
     if (amount >= totalAmount) {
       return (amount - totalAmount).toFixed(2);
     }
+    
     return '0.00';
+  };
+
+  // Verificar se o valor é uma nota não permitida
+  const isForbiddenNote = (amount) => {
+    return FORBIDDEN_NOTES.includes(amount);
   };
 
   return (
@@ -113,11 +230,29 @@ export default function PaymentMethodSelector({
           value={selectedPaymentMethod?.id || selectedPaymentMethod?.tipo || ''} 
           onValueChange={(value) => {
             if (value === 'dinheiro') {
+              // Verificar se o valor total excede o limite para pagamento em dinheiro
+              if (totalAmount > CASH_PAYMENT_LIMIT) {
+                // Não permitir seleção de dinheiro se exceder o limite
+                return;
+              }
+              
               // Se já tem valor em dinheiro definido, manter os valores
               if (selectedPaymentMethod?.tipo === 'dinheiro' && selectedPaymentMethod?.valor_pago) {
                 onPaymentMethodSelect(selectedPaymentMethod);
               } else {
-                onPaymentMethodSelect({ tipo: 'dinheiro' });
+                // Preencher input com valor total formatado automaticamente
+                const formattedTotal = totalAmount.toFixed(2).replace('.', ',');
+                onPaymentMethodSelect({ 
+                  tipo: 'dinheiro',
+                  valor_pago: totalAmount,
+                  troco: 0
+                });
+                setCashAmount(formattedTotal);
+                
+                console.log("=== DEBUG AUTO-FILL TOTAL ===");
+                console.log("Total Amount:", totalAmount);
+                console.log("Formatted Total:", formattedTotal);
+                console.log("Cash Amount Set:", formattedTotal);
               }
             } else {
               const card = savedCards.find(c => c.id === value);
@@ -154,16 +289,30 @@ export default function PaymentMethodSelector({
           )}
 
           {/* Pagamento em Dinheiro */}
-          <div className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50">
-            <RadioGroupItem value="dinheiro" id="dinheiro" />
+          <div className={`flex items-center space-x-3 p-3 border rounded-lg ${totalAmount > CASH_PAYMENT_LIMIT ? 'bg-red-50 border-red-200' : 'hover:bg-gray-50'}`}>
+            <RadioGroupItem 
+              value="dinheiro" 
+              id="dinheiro" 
+              disabled={totalAmount > CASH_PAYMENT_LIMIT}
+            />
             <div className="flex items-center gap-3 flex-1">
-              <div className="bg-green-100 p-2 rounded-full">
-                <Banknote className="w-4 h-4 text-green-600" />
+              <div className={`p-2 rounded-full ${totalAmount > CASH_PAYMENT_LIMIT ? 'bg-red-100' : 'bg-green-100'}`}>
+                <Banknote className={`w-4 h-4 ${totalAmount > CASH_PAYMENT_LIMIT ? 'text-red-600' : 'text-green-600'}`} />
               </div>
               <div className="flex-1">
-                <Label htmlFor="dinheiro" className="cursor-pointer">
-                  <div className="font-medium">Dinheiro (Pagar na entrega)</div>
-                  <div className="text-sm text-gray-600">Pague com dinheiro na entrega</div>
+                <Label htmlFor="dinheiro" className={`cursor-pointer ${totalAmount > CASH_PAYMENT_LIMIT ? 'text-red-600' : ''}`}>
+                  <div className="font-medium">
+                    Dinheiro (Pagar na entrega)
+                    {totalAmount > CASH_PAYMENT_LIMIT && (
+                      <span className="text-red-600 ml-2">- Não disponível</span>
+                    )}
+                  </div>
+                  <div className={`text-sm ${totalAmount > CASH_PAYMENT_LIMIT ? 'text-red-500' : 'text-gray-600'}`}>
+                    {totalAmount > CASH_PAYMENT_LIMIT 
+                      ? `Valor excede o limite de €${CASH_PAYMENT_LIMIT}. Use cartão ou outro método.`
+                      : 'Pague com dinheiro na entrega'
+                    }
+                  </div>
                 </Label>
               </div>
             </div>
@@ -178,33 +327,54 @@ export default function PaymentMethodSelector({
               <Label className="font-medium text-black">Valor em Dinheiro</Label>
             </div>
             <div className="space-y-2">
-              <Label className="text-black">Valor que você vai pagar:</Label>
+              <Label className="text-black">Valor que você vai pagar (já preenchido com o total):</Label>
               <Input
                 type="number"
                 step="0.01"
                 min={totalAmount}
                 value={cashAmount}
-                onChange={(e) => setCashAmount(e.target.value)}
-                placeholder={`Mínimo: €${totalAmount.toFixed(2)}`}
+                onChange={(e) => handleCashAmountChange(e.target.value)}
+                placeholder={`Valor total: €${totalAmount.toFixed(2)} (valor exato)`}
                 className="border-gray-300 focus:border-gray-500"
               />
-              {cashAmount && parseFloat(cashAmount) >= totalAmount && (
+              
+              {/* Sempre mostrar informações quando dinheiro estiver selecionado */}
+              {selectedPaymentMethod?.tipo === 'dinheiro' && (
                 <div className="space-y-2">
                   <div className="text-sm text-black">
-                    <strong>Troco: €{calculateChange()}</strong>
+                    <strong>Valor a pagar: €{selectedPaymentMethod.valor_pago?.toFixed(2) || totalAmount.toFixed(2)}</strong>
                   </div>
-                  <Button 
-                    onClick={handleCashPayment}
-                    className="w-full bg-green-600 hover:bg-green-700"
-                    size="sm"
-                  >
-                    Confirmar Pagamento em Dinheiro
-                  </Button>
-                </div>
-              )}
-              {cashAmount && parseFloat(cashAmount) < totalAmount && (
-                <div className="text-sm text-red-600">
-                  Valor insuficiente. Mínimo: €{totalAmount.toFixed(2)}
+                  <div className="text-sm text-black">
+                    <strong>Troco: €{(selectedPaymentMethod.troco || 0).toFixed(2)}</strong>
+                  </div>
+                  
+                  {/* Mostrar erro se for uma nota não permitida */}
+                  {cashAmount && isForbiddenNote(parseCurrencyValue(cashAmount)) && (
+                    <div className="text-sm text-red-600 bg-red-50 p-2 rounded-md">
+                      <div className="font-medium">Notas de €100, €200 e €500 não são aceitas</div>
+                      <div className="text-xs mt-1">Para facilitar o troco ao entregador, use notas menores</div>
+                    </div>
+                  )}
+                  
+                  {/* Mostrar erro se valor for insuficiente */}
+                  {cashAmount && parseCurrencyValue(cashAmount) < totalAmount && parseCurrencyValue(cashAmount) > 0 && !isForbiddenNote(parseCurrencyValue(cashAmount)) && (
+                    <div className="text-sm text-red-600 bg-red-50 p-2 rounded-md">
+                      Valor insuficiente. Mínimo: €{totalAmount.toFixed(2)}
+                    </div>
+                  )}
+                  
+                  {/* Mostrar confirmação temporariamente quando valor for válido */}
+                  {showConfirmation && (
+                    <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 p-2 rounded-md animate-pulse">
+                      <CheckCircle className="w-4 h-4" />
+                      <span>
+                        {selectedPaymentMethod.troco === 0 ? 
+                          "Pagamento em dinheiro confirmado (valor exato)!" : 
+                          "Pagamento em dinheiro confirmado!"
+                        }
+                      </span>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

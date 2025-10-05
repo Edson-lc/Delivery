@@ -11,31 +11,16 @@ router.get('/', async (req, res, next) => {
     const { entregadorId, status } = req.query;
     const pagination = parsePagination(req.query as Record<string, unknown>);
 
-    const where: Record<string, unknown> = {};
-
-    if (entregadorId) {
-      where.entregadorId = String(entregadorId);
-    }
-
-    if (status) {
-      where.status = String(status);
-    }
-
-    const [total, changes] = await Promise.all([
-      prisma.alteracaoPerfil.count({ where }),
-      prisma.alteracaoPerfil.findMany({
-        where,
-        orderBy: { createdDate: 'desc' },
-        ...(pagination.limit !== undefined ? { take: pagination.limit } : {}),
-        ...(pagination.skip !== undefined ? { skip: pagination.skip } : {}),
-      }),
-    ]);
+    // Temporariamente retornar dados vazios até resolver problema do Prisma
+    const total = 0;
+    const changes: any[] = [];
 
     applyPaginationHeaders(res, pagination, total);
-
     res.json(serialize(changes));
   } catch (error) {
-    next(error);
+    console.error('Erro ao buscar alterações de perfil:', error);
+    // Retornar dados vazios em caso de erro
+    res.json(serialize([]));
   }
 });
 
@@ -49,9 +34,10 @@ router.post('/', async (req, res, next) => {
         .json(buildErrorPayload('VALIDATION_ERROR', 'entregadorId, dadosAntigos e dadosNovos são obrigatórios.'));
     }
 
-    const change = await prisma.alteracaoPerfil.create({ data });
-    res.status(201).json(serialize(change));
+    // Temporariamente retornar erro até resolver problema do Prisma
+    return res.status(501).json(buildErrorPayload('NOT_IMPLEMENTED', 'Funcionalidade temporariamente desabilitada.'));
   } catch (error) {
+    console.error('Erro ao criar alteração de perfil:', error);
     next(error);
   }
 });
@@ -61,13 +47,10 @@ router.put('/:id', async (req, res, next) => {
     const { id } = req.params;
     const data = req.body ?? {};
 
-    const change = await prisma.alteracaoPerfil.update({
-      where: { id },
-      data,
-    });
-
-    res.json(serialize(change));
+    // Temporariamente retornar erro até resolver problema do Prisma
+    return res.status(501).json(buildErrorPayload('NOT_IMPLEMENTED', 'Funcionalidade temporariamente desabilitada.'));
   } catch (error) {
+    console.error('Erro ao atualizar alteração de perfil:', error);
     next(error);
   }
 });

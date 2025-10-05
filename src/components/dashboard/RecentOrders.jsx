@@ -33,11 +33,13 @@ export default function RecentOrders({ orders, isLoading }) {
     if (typeof endereco === 'string') return endereco;
     if (!endereco || typeof endereco !== 'object') return 'Endereço não informado';
     
-    const { rua = '', numero = '', bairro = '' } = endereco;
+    const { rua = '', numero = '', bairro = '', cidade = '', cep = '' } = endereco;
     let addressString = '';
     if (rua) addressString += rua;
     if (numero) addressString += `, ${numero}`;
     if (bairro) addressString += ` - ${bairro}`;
+    if (cidade && bairro !== cidade) addressString += `, ${cidade}`;
+    if (cep) addressString += ` - ${cep}`;
     
     return addressString || 'Endereço não informado';
   };

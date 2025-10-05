@@ -11,6 +11,11 @@ export default function UserForm({ user, onSubmit, onCancel }) {
   const initialData = user
     ? {
         ...user,
+        full_name: user.full_name || "",
+        email: user.email || "",
+        telefone: user.telefone || "",
+        nif: user.nif || "",
+        foto_url: user.foto_url || "",
         data_nascimento: normalizeDateForInput(user.data_nascimento ?? user.dataNascimento),
         endereco: normalizeAddressValue(
           user?.endereco ?? (Array.isArray(user?.enderecos_salvos) ? user.enderecos_salvos[0] : undefined)
@@ -34,6 +39,11 @@ export default function UserForm({ user, onSubmit, onCancel }) {
     if (!user) return;
     setFormData({
       ...user,
+      full_name: user.full_name || "",
+      email: user.email || "",
+      telefone: user.telefone || "",
+      nif: user.nif || "",
+      foto_url: user.foto_url || "",
       data_nascimento: normalizeDateForInput(user.data_nascimento ?? user.dataNascimento),
       endereco: normalizeAddressValue(
         user?.endereco ?? (Array.isArray(user?.enderecos_salvos) ? user.enderecos_salvos[0] : undefined)
@@ -180,7 +190,7 @@ export default function UserForm({ user, onSubmit, onCancel }) {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="bairro">Bairro</Label>
+                <Label htmlFor="bairro">Freguesia</Label>
                 <Input
                   id="bairro"
                   value={formData.endereco?.bairro || ""}
@@ -215,7 +225,7 @@ export default function UserForm({ user, onSubmit, onCancel }) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="role">Função no Sistema</Label>
-                <Select value={formData.role} onValueChange={(value) => handleInputChange("role", value)}>
+                <Select value={formData.role || "user"} onValueChange={(value) => handleInputChange("role", value)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione a função" />
                   </SelectTrigger>
@@ -227,7 +237,7 @@ export default function UserForm({ user, onSubmit, onCancel }) {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="status">Status da Conta</Label>
-                <Select value={formData.status} onValueChange={(value) => handleInputChange("status", value)}>
+                <Select value={formData.status || "ativo"} onValueChange={(value) => handleInputChange("status", value)}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>

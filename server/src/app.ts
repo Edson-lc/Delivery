@@ -54,7 +54,7 @@ const corsOptions = {
         return callback(new Error('Origem não permitida pelo CORS'), false);
       }
     } else {
-      // Em desenvolvimento, permitir localhost
+      // Em desenvolvimento, permitir localhost e IPs da rede local
       const allowedDevOrigins = [
         'http://localhost:4000', 
         'http://localhost:5173', 
@@ -63,7 +63,27 @@ const corsOptions = {
         'http://localhost:5176',
         'http://localhost:5177',
         'http://localhost:5178',
-        'http://localhost:5179'
+        'http://localhost:5179',
+        // IPs da rede local
+        'http://192.168.1.229:5173',
+        'http://192.168.1.229:5174',
+        'http://192.168.1.229:5175',
+        'http://192.168.1.229:5176',
+        'http://192.168.1.229:5177',
+        'http://192.168.1.229:5178',
+        'http://192.168.1.229:5179',
+        'http://192.168.1.229:5180',
+        'http://192.168.1.229:5181',
+        // IP Docker/VM
+        'http://82.155.88.172:5173',
+        'http://82.155.88.172:5174',
+        'http://82.155.88.172:5175',
+        'http://82.155.88.172:5176',
+        'http://82.155.88.172:5177',
+        'http://82.155.88.172:5178',
+        'http://82.155.88.172:5179',
+        'http://82.155.88.172:5180',
+        'http://82.155.88.172:5181'
       ];
       if (allowedDevOrigins.includes(origin)) {
         return callback(null, true);
@@ -75,7 +95,15 @@ const corsOptions = {
   credentials: true,
   exposedHeaders: ['X-Total-Count', 'X-Limit', 'X-Skip'],
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-CSRF-Token'],
+  allowedHeaders: [
+    'Content-Type', 
+    'Authorization', 
+    'X-Requested-With', 
+    'X-CSRF-Token',
+    'Cache-Control',
+    'Pragma',
+    'Expires'
+  ],
   maxAge: 86400, // Cache preflight por 24 horas
 };
 

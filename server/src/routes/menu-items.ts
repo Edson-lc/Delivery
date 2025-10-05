@@ -77,15 +77,40 @@ router.get('/:id', async (req, res, next) => {
 
 router.post('/', async (req, res, next) => {
   try {
-    const data = req.body ?? {};
+    const rawData = req.body ?? {};
 
-    if (!data.restaurantId) {
+    if (!rawData.restaurantId) {
       return res.status(400).json(buildErrorPayload('VALIDATION_ERROR', 'restaurantId é obrigatório.'));
     }
 
-    if (!data.nome || data.preco === undefined) {
+    if (!rawData.nome || rawData.preco === undefined) {
       return res.status(400).json(buildErrorPayload('VALIDATION_ERROR', 'nome e preco são obrigatórios.'));
     }
+
+    // Mapear campos do frontend para o modelo
+    const data: Record<string, any> = {};
+    
+    if (rawData.nome !== undefined) data.nome = rawData.nome;
+    if (rawData.descricao !== undefined) data.descricao = rawData.descricao;
+    if (rawData.categoria !== undefined) data.categoria = rawData.categoria;
+    if (rawData.preco !== undefined) data.preco = rawData.preco;
+    if (rawData.disponivel !== undefined) data.disponivel = rawData.disponivel;
+    if (rawData.imagemUrl !== undefined) data.imagemUrl = rawData.imagemUrl;
+    if (rawData.imagem_url !== undefined) data.imagemUrl = rawData.imagem_url;
+    if (rawData.ingredientes !== undefined) data.ingredientes = rawData.ingredientes;
+    if (rawData.alergenos !== undefined) data.alergenos = rawData.alergenos;
+    if (rawData.adicionais !== undefined) data.adicionais = rawData.adicionais;
+    // Mapear tanto snake_case quanto camelCase do frontend
+    if (rawData.opcoes_personalizacao !== undefined) {
+      data.opcoes_personalizacao = rawData.opcoes_personalizacao;
+    } else if (rawData.opcoesPersonalizacao !== undefined) {
+      data.opcoes_personalizacao = rawData.opcoesPersonalizacao;
+    }
+    if (rawData.calorias !== undefined) data.calorias = rawData.calorias;
+    if (rawData.tempoPreparo !== undefined) data.tempoPreparo = rawData.tempoPreparo;
+    if (rawData.tempo_preparo !== undefined) data.tempoPreparo = rawData.tempo_preparo;
+    if (rawData.ordem !== undefined) data.ordem = rawData.ordem;
+    if (rawData.restaurantId !== undefined) data.restaurantId = rawData.restaurantId;
 
     const menuItem = await prisma.menuItem.create({ data });
     res.status(201).json(serialize(menuItem));

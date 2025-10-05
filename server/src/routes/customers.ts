@@ -82,27 +82,43 @@ router.put('/:id', async (req, res, next) => {
     const { id } = req.params;
     const rawData = req.body ?? {};
 
-    // Filtrar apenas campos válidos do modelo User
-    const validFields = [
-      'fullName', 'email', 'role', 'tipoUsuario', 'nome', 'sobrenome', 
-      'telefone', 'nif', 'dataNascimento', 'fotoUrl', 'status', 
-      'passwordHash', 'consentimentoDados', 'enderecosSalvos', 'metodosPagamento',
-      'enderecos_salvos', 'metodos_pagamento_salvos'
+    // Verificar se o usuário existe
+    const existingUser = await prisma.user.findUnique({ where: { id } });
+    if (!existingUser) {
+      return res.status(404).json(buildErrorPayload('USER_NOT_FOUND', 'Usuário não encontrado.'));
+    }
+
+    // Campos que podem ser atualizados (excluindo campos sensíveis)
+    const updatableFields = [
+      'fullName', 'nome', 'sobrenome', 'telefone', 'nif', 
+      'dataNascimento', 'fotoUrl', 'status', 'consentimentoDados', 
+      'enderecosSalvos', 'metodosPagamento', 'enderecos_salvos', 
+      'metodos_pagamento_salvos'
     ];
 
     const data: Record<string, any> = {};
+    
+    // Filtrar apenas campos que podem ser atualizados
     for (const [key, value] of Object.entries(rawData)) {
-      if (validFields.includes(key)) {
+      if (updatableFields.includes(key) && value !== undefined) {
         data[key] = value;
       }
     }
 
     // Mapear campos específicos se necessário
-    if (rawData.enderecos_salvos) {
+    if (rawData.enderecos_salvos !== undefined) {
       data.enderecosSalvos = rawData.enderecos_salvos;
     }
-    if (rawData.metodos_pagamento_salvos) {
+    if (rawData.metodos_pagamento_salvos !== undefined) {
       data.metodosPagamento = rawData.metodos_pagamento_salvos;
+    }
+
+    // Adicionar timestamp de atualização
+    data.updatedDate = new Date();
+
+    // Verificar se há dados para atualizar
+    if (Object.keys(data).length === 1 && data.updatedDate) {
+      return res.json(serialize(existingUser));
     }
 
     const customer = await prisma.user.update({
@@ -112,6 +128,7 @@ router.put('/:id', async (req, res, next) => {
 
     res.json(serialize(customer));
   } catch (error) {
+    console.error('Erro ao atualizar usuário:', error);
     next(error);
   }
 });

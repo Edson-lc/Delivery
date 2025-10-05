@@ -38,12 +38,13 @@ export default function RestaurantOrderModal({ order, onClose, onStatusUpdate })
     if (typeof endereco === 'string') return endereco;
     if (!endereco || typeof endereco !== 'object') return 'Endereço não informado';
 
-    const { rua = '', numero = '', bairro = '', cidade = '' } = endereco;
+    const { rua = '', numero = '', bairro = '', cidade = '', cep = '' } = endereco;
     let addressString = '';
     if (rua) addressString += rua;
     if (numero) addressString += `, ${numero}`;
     if (bairro) addressString += ` - ${bairro}`;
     if (cidade && bairro !== cidade) addressString += `, ${cidade}`;
+    if (cep) addressString += ` - ${cep}`;
 
     return addressString || 'Endereço não informado';
   };
@@ -60,7 +61,7 @@ export default function RestaurantOrderModal({ order, onClose, onStatusUpdate })
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" aria-describedby="restaurant-order-description">
         <DialogHeader>
           <DialogTitle className="flex justify-between items-center">
             <span>Pedido #{String(order.id ?? "").slice(-6)}</span>
@@ -72,6 +73,9 @@ export default function RestaurantOrderModal({ order, onClose, onStatusUpdate })
             {format(new Date(order.created_date), "dd 'de' MMMM, yyyy 'às' HH:mm", { locale: ptBR })}
           </p>
         </DialogHeader>
+        <div id="restaurant-order-description" className="sr-only">
+          Detalhes do pedido para o restaurante
+        </div>
 
         <div className="space-y-6 py-4">
           {/* Informações do Cliente */}

@@ -246,7 +246,7 @@ CREATE TABLE orders (
     total DECIMAL(10,2) NOT NULL,
     
     -- Status e pagamento
-    status VARCHAR(30) DEFAULT 'pendente_pagamento' CHECK (status IN ('pendente_pagamento', 'pago', 'confirmado', 'preparando', 'pronto', 'saiu_entrega', 'entregue', 'cancelado', 'rejeitado')),
+    status VARCHAR(30) DEFAULT 'pendente' CHECK (status IN ('pendente', 'confirmado', 'preparando', 'pronto', 'saiu_entrega', 'entregue', 'cancelado', 'rejeitado')),
     forma_pagamento VARCHAR(30) CHECK (forma_pagamento IN ('cartao_credito', 'cartao_debito', 'pix', 'dinheiro', 'vale_refeicao')),
     pagamento_status VARCHAR(20) DEFAULT 'pendente' CHECK (pagamento_status IN ('pendente', 'aprovado', 'rejeitado', 'cancelado')),
     pagamento_id VARCHAR(100),

@@ -10,6 +10,8 @@ const __dirname = dirname(__filename);
 export default defineConfig({
   plugins: [react()],
   server: {
+    host: '0.0.0.0', // Permite acesso de qualquer IP na rede
+    port: 5173, // Porta padrão do Vite
     allowedHosts: true,
   },
   resolve: {

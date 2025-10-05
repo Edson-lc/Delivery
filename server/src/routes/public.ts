@@ -72,7 +72,8 @@ router.get('/restaurants', async (req, res, next) => {
     const pagination = parsePagination(req.query as Record<string, unknown>);
 
     const filters: Record<string, unknown> = {
-      ativo: true // Apenas restaurantes ativos
+      status: "ativo", // Apenas restaurantes ativos
+      open: true // Apenas restaurantes abertos
     };
 
     if (category) {
@@ -97,15 +98,34 @@ router.get('/restaurants', async (req, res, next) => {
       prisma.restaurant.findMany({
         where,
         orderBy: { rating: 'desc' }, // Ordenar por avaliação (melhores primeiro)
-        include:
-          includeMenuItems === 'true'
-            ? { 
-                menuItems: { 
-                  where: { disponivel: true }, // Apenas itens disponÃ­veis
-                  orderBy: { nome: 'asc' } 
-                } 
-              }
-            : undefined,
+        select: {
+          id: true,
+          createdDate: true,
+          updatedDate: true,
+          createdBy: true,
+          nome: true,
+          descricao: true,
+          categoria: true,
+          endereco: true,
+          cidade: true,
+          codigoPostal: true,
+          telefone: true,
+          email: true,
+          website: true,
+          horarioFuncionamento: true,
+          tempoPreparo: true,
+          taxaEntrega: true,
+          valorMinimo: true,
+          status: true,
+          open: true,
+          imagemUrl: true,
+          rating: true,
+          totalAvaliacoes: true,
+          menuItems: includeMenuItems === 'true' ? {
+            where: { disponivel: true },
+            orderBy: { nome: 'asc' }
+          } : false
+        },
         ...(pagination.limit !== undefined ? { take: pagination.limit } : {}),
         ...(pagination.skip !== undefined ? { skip: pagination.skip } : {}),
       }),
@@ -123,7 +143,7 @@ router.get('/restaurants', async (req, res, next) => {
 router.get('/restaurants/categories', async (req, res, next) => {
   try {
     const categories = await prisma.restaurant.findMany({
-      where: { ativo: true },
+      where: { status: "ativo", open: true },
       select: { categoria: true },
       distinct: ['categoria'],
     });
@@ -146,7 +166,8 @@ router.get('/restaurants/:id', async (req, res, next) => {
     const restaurant = await prisma.restaurant.findFirst({
       where: { 
         id,
-        ativo: true // Apenas restaurantes ativos
+        status: "ativo", // Apenas restaurantes ativos
+        open: true // Apenas restaurantes abertos
       },
       include: { 
         menuItems: { 
@@ -202,12 +223,28 @@ router.get('/menu-items', async (req, res, next) => {
       prisma.menuItem.findMany({
         where,
         orderBy: { nome: 'asc' },
-        include: {
+        select: {
+          id: true,
+          createdDate: true,
+          updatedDate: true,
+          createdBy: true,
+          nome: true,
+          descricao: true,
+          categoria: true,
+          preco: true,
+          disponivel: true,
+          ingredientes: true,
+          alergenos: true,
+          adicionais: true,
+          opcoes_personalizacao: true,
+          imagemUrl: true,
+          restaurantId: true,
           restaurant: {
             select: {
               id: true,
               nome: true,
-              ativo: true
+              status: true,
+              open: true
             }
           }
         },
@@ -269,17 +306,18 @@ router.get('/menu-items/:id', async (req, res, next) => {
             nome: true,
             endereco: true,
             telefone: true,
-            tempoEntrega: true,
+            tempoPreparo: true,
             taxaEntrega: true,
             pedidoMinimo: true,
             rating: true,
-            ativo: true
+            status: true,
+            open: true
           }
         }
       },
     });
 
-    if (!menuItem || !menuItem.restaurant?.ativo) {
+    if (!menuItem || !menuItem.restaurant?.status || menuItem.restaurant.status !== "ativo" || !menuItem.restaurant.open) {
       return res.status(404).json(buildErrorPayload('MENU_ITEM_NOT_FOUND', 'Item de menu nÃ£o encontrado ou indisponÃ­vel.'));
     }
 

@@ -153,6 +153,7 @@ function PagesContent() {
                 <Route path="/EntregasRecentes" element={<EntregasRecentes />} />
                 
                 <Route path="/RestaurantDashboard" element={<RestaurantDashboard />} />
+                <Route path="/restaurantedashboard" element={<RestaurantDashboard />} />
                 
                 <Route path="/DatabaseScripts" element={<DatabaseScripts />} />
                 <Route path="/Login" element={<Login />} />

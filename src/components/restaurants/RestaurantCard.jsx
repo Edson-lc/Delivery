@@ -7,10 +7,11 @@ import {
   MapPin, 
   Phone, 
   Clock, 
-  DollarSign,
   Edit,
   Eye,
-  MoreHorizontal
+  MoreHorizontal,
+  Bike,
+  Timer
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -18,6 +19,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { getCategoryIcon, getCategoryColor } from "@/utils/categoryIcons";
 
 const statusColors = {
   ativo: "bg-green-100 text-green-800 border-green-200",
@@ -31,23 +33,10 @@ const statusLabels = {
   suspenso: "Suspenso"
 };
 
-const categoryEmojis = {
-  brasileira: "🇧🇷",
-  italiana: "🍝",
-  japonesa: "🍱",
-  chinesa: "🥢",
-  arabe: "🥙",
-  mexicana: "🌮",
-  hamburguer: "🍔",
-  pizza: "🍕",
-  saudavel: "🥗",
-  sobremesas: "🍰",
-  lanches: "🥪",
-  outros: "🍽️"
-};
-
 export default function RestaurantCard({ restaurant, onEdit, onViewDetails }) {
   const defaultImage = "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=250&fit=crop&crop=center";
+  const CategoryIcon = getCategoryIcon(restaurant.categoria);
+  const categoryColor = getCategoryColor(restaurant.categoria);
 
   return (
     <Card className="border-none shadow-lg bg-white/80 backdrop-blur-sm hover:shadow-xl transition-all duration-300 overflow-hidden group">
@@ -63,9 +52,12 @@ export default function RestaurantCard({ restaurant, onEdit, onViewDetails }) {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
         
-        {/* Badge de status */}
-        <div className="absolute top-3 left-3">
-          <Badge className={`${statusColors[restaurant.status]} border font-medium`}>
+        {/* Badges de status e aberto/fechado */}
+        <div className="absolute top-3 left-3 flex gap-2">
+          <Badge className={`${restaurant.open ? 'bg-blue-100 text-blue-800 border-blue-200' : 'bg-orange-100 text-orange-800 border-orange-200'} border font-medium pointer-events-none`}>
+            {restaurant.open ? 'Aberto' : 'Fechado'}
+          </Badge>
+          <Badge className={`${statusColors[restaurant.status]} border font-medium pointer-events-none`}>
             {statusLabels[restaurant.status]}
           </Badge>
         </div>
@@ -94,14 +86,17 @@ export default function RestaurantCard({ restaurant, onEdit, onViewDetails }) {
         {/* Informações sobrepostas */}
         <div className="absolute bottom-3 left-3 right-3">
           <h3 className="text-white font-bold text-lg mb-1">{restaurant.nome}</h3>
-          <div className="flex items-center gap-2">
-            <span className="text-white/90 text-sm">
-              {categoryEmojis[restaurant.categoria]} {restaurant.categoria}
-            </span>
-            {restaurant.avaliacao && (
-              <div className="flex items-center gap-1">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <CategoryIcon className={`w-4 h-4 ${categoryColor}`} />
+                    <span className="text-white/90 text-sm capitalize">
+                      {restaurant.categoria}
+                    </span>
+                  </div>
+            {(restaurant.rating || restaurant.avaliacao) && (
+              <div className="flex items-center gap-1 bg-black/30 backdrop-blur-sm rounded-full px-2 py-1">
                 <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                <span className="text-white/90 text-sm">{restaurant.avaliacao.toFixed(1)}</span>
+                <span className="text-white font-medium text-sm">{(restaurant.rating || restaurant.avaliacao).toFixed(1)}</span>
               </div>
             )}
           </div>
@@ -127,16 +122,37 @@ export default function RestaurantCard({ restaurant, onEdit, onViewDetails }) {
           )}
         </div>
 
-        {/* Informações operacionais */}
-        <div className="flex items-center justify-between text-sm">
-          <div className="flex items-center gap-1 text-gray-600">
-            <Clock className="w-4 h-4 text-gray-400" />
-            <span>{restaurant.tempo_preparo || 30} min</span>
+        {/* Informações operacionais destacadas */}
+        <div className="bg-gray-50 rounded-lg p-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 text-gray-700">
+                <Timer className="w-4 h-4 text-blue-500" />
+                <span className="text-sm font-medium">{restaurant.tempoPreparo || restaurant.tempo_preparo || 30} min</span>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 text-gray-700">
+                <Star className="w-4 h-4 text-yellow-500" />
+                <span className="text-sm font-medium">{restaurant.rating || restaurant.avaliacao || 0}</span>
+              </div>
+            </div>
           </div>
           
-          <div className="flex items-center gap-1 text-gray-600">
-            <DollarSign className="w-4 h-4 text-gray-400" />
-            <span>€ {restaurant.taxa_entrega?.toFixed(2) || '0.00'}</span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1 text-gray-700">
+              <Bike className="w-4 h-4 text-green-500" />
+              <span className="text-sm font-medium">Taxa: €{restaurant.taxaEntrega || restaurant.taxa_entrega || 0}</span>
+            </div>
+            
+            {restaurant.valorMinimo && (
+              <div className="flex items-center gap-1 text-gray-700">
+                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-medium">
+                  Min: €{restaurant.valorMinimo}
+                </span>
+              </div>
+            )}
           </div>
         </div>
 

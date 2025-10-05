@@ -1,6 +1,24 @@
 import { getAuthToken } from './session';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+// Configuração da URL da API - usar localhost para desenvolvimento
+const getApiBaseUrl = () => {
+  // Se VITE_API_URL estiver definido, usar ele
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  
+  // Para desenvolvimento local, usar localhost
+  // Isso evita problemas de CORS
+  return 'http://localhost:4000/api';
+};
+
+const API_BASE_URL = getApiBaseUrl();
+
+// Debug: Log da URL da API sendo usada
+console.log('🔧 API_BASE_URL configurada para:', API_BASE_URL);
+console.log('🌐 Hostname atual:', window.location.hostname);
+console.log('📱 User Agent:', navigator.userAgent);
+console.log('✅ Usando localhost para evitar problemas de CORS');
 
 function buildHeaders(custom = {}) {
   const token = getAuthToken();
@@ -57,7 +75,12 @@ export async function apiRequest(path, { method = 'GET', headers, body, query } 
 
   const options = {
     method,
-    headers: buildHeaders(headers),
+    headers: {
+      ...buildHeaders(headers),
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    },
     body: body !== undefined ? JSON.stringify(body) : undefined,
     credentials: 'include',
   };

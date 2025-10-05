@@ -34,12 +34,13 @@ export default function OrderDetailsModal({ order, restaurant, onClose, onUpdate
         if (typeof endereco === 'string') return endereco;
         if (!endereco || typeof endereco !== 'object') return 'Endereço não informado';
 
-        const { rua = '', numero = '', bairro = '', cidade = '' } = endereco;
+        const { rua = '', numero = '', bairro = '', cidade = '', cep = '' } = endereco;
         let addressString = '';
         if (rua) addressString += rua;
         if (numero) addressString += `, ${numero}`;
         if (bairro) addressString += ` - ${bairro}`;
         if (cidade && bairro !== cidade) addressString += `, ${cidade}`;
+        if (cep) addressString += ` - ${cep}`;
 
         return addressString || 'Endereço não informado';
     };
@@ -56,7 +57,7 @@ export default function OrderDetailsModal({ order, restaurant, onClose, onUpdate
     
     return (
         <Dialog open={true} onOpenChange={onClose}>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="max-w-2xl" aria-describedby="order-details-description">
                 <DialogHeader>
                     <DialogTitle className="flex justify-between items-center">
                         <span>Detalhes do Pedido #{order.id.slice(-6)}</span>

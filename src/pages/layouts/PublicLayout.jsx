@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/contexts/AuthContext";
 import { createPageUrl } from "@/utils";
-import { LogIn, LogOut, User as UserIcon } from "lucide-react";
+import { LogOut, User as UserIcon } from "lucide-react";
 import SearchBar from "@/components/public/SearchBar";
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -19,14 +19,17 @@ export function PublicLayout({ children }) {
   const location = useLocation();
   const navigate = useNavigate();
   
-  // Detectar se estamos na página de um restaurante
+  // Detectar se estamos na página de um restaurante ou login
   useEffect(() => {
     const checkIfRestaurantPage = () => {
       const path = location.pathname.toLowerCase();
       // Detectar página de restaurante - rota é /restaurantmenu (minúsculo)
+      // Detectar página de login - rota é /login (minúsculo)
       const isRestaurant = path === '/restaurantmenu' || path.includes('/restaurantmenu');
-      console.log('🔍 Detecção de página:', { path, isRestaurant, isRestaurantPage });
-      setIsRestaurantPage(isRestaurant);
+      const isLogin = path === '/login' || path.includes('/login');
+      const shouldHideSearch = isRestaurant || isLogin;
+      console.log('🔍 Detecção de página:', { path, isRestaurant, isLogin, shouldHideSearch });
+      setIsRestaurantPage(shouldHideSearch);
     };
 
     checkIfRestaurantPage();
@@ -66,7 +69,7 @@ export function PublicLayout({ children }) {
               </a>
             </div>
 
-            {/* Barra de Pesquisa - Centralizada (Desktop) - Só aparece fora da página de restaurante */}
+            {/* Barra de Pesquisa - Centralizada (Desktop) - Só aparece fora da página de restaurante e login */}
             {!isRestaurantPage && (
               <div className="flex-1 max-w-2xl mx-8">
                 <SearchBar 
@@ -128,8 +131,7 @@ export function PublicLayout({ children }) {
                   variant="default"
                   className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg"
                 >
-                  <LogIn className="w-4 h-4 mr-2" />
-                  Iniciar Sessão
+                  Entrar
                 </Button>
               )}
             </div>
@@ -201,14 +203,13 @@ export function PublicLayout({ children }) {
                     variant="default"
                     className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1.5 rounded-lg text-sm"
                   >
-                    <LogIn className="w-4 h-4 mr-1" />
                     Entrar
                   </Button>
                 )}
               </div>
             </div>
 
-            {/* Segunda linha: Barra de Pesquisa - Só aparece fora da página de restaurante */}
+            {/* Segunda linha: Barra de Pesquisa - Só aparece fora da página de restaurante e login */}
             {!isRestaurantPage && (
               <div className="px-3 pb-3">
                 <SearchBar 

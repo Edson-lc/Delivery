@@ -195,11 +195,11 @@ export default function AddressSelector({
                     />
                   </div>
                   <div>
-                    <Label>Bairro *</Label>
+                    <Label>Freguesia *</Label>
                     <Input
                       value={newAddress.bairro}
                       onChange={(e) => setNewAddress(prev => ({ ...prev, bairro: e.target.value }))}
-                      placeholder="Bairro"
+                      placeholder="Freguesia"
                     />
                   </div>
                 </div>

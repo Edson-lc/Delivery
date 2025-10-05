@@ -71,12 +71,13 @@ export default function EntregadoresPage() {
   const loadData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [driversData, alteracoes] = await Promise.all([
+      const [driversData, alteracoesResponse] = await Promise.all([
         Entregador.list('-created_date'),
         AlteracaoPerfil.filter({ status: 'pendente' }),
       ]);
       setEntregadores(driversData);
-      setSolicitacoesAlteracao(alteracoes);
+      // AlteracaoPerfil.filter retorna um objeto com count, não um array
+      setSolicitacoesAlteracao(alteracoesResponse.data || []);
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
     }

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teste API AmaDelivery</title>
+</head>
+<body>
+    <h1>Teste de Conectividade com API</h1>
+    <div id="result"></div>
+    
+    <script>
+        async function testAPI() {
+            const resultDiv = document.getElementById('result');
+            
+            try {
+                // Teste 1: API local
+                resultDiv.innerHTML += '<h3>Teste 1: API Local (localhost:4000)</h3>';
+                const response1 = await fetch('http://localhost:4000/api/public/restaurants');
+                const data1 = await response1.json();
+                resultDiv.innerHTML += `<p>✅ Localhost: ${data1.length} restaurantes encontrados</p>`;
+            } catch (error) {
+                resultDiv.innerHTML += `<p>❌ Localhost: ${error.message}</p>`;
+            }
+            
+            try {
+                // Teste 2: API rede local
+                resultDiv.innerHTML += '<h3>Teste 2: API Rede Local (192.168.1.229:4000)</h3>';
+                const response2 = await fetch('http://192.168.1.229:4000/api/public/restaurants');
+                const data2 = await response2.json();
+                resultDiv.innerHTML += `<p>✅ Rede Local: ${data2.length} restaurantes encontrados</p>`;
+            } catch (error) {
+                resultDiv.innerHTML += `<p>❌ Rede Local: ${error.message}</p>`;
+            }
+            
+            // Informações do dispositivo
+            resultDiv.innerHTML += '<h3>Informações do Dispositivo</h3>';
+            resultDiv.innerHTML += `<p>User Agent: ${navigator.userAgent}</p>`;
+            resultDiv.innerHTML += `<p>URL Atual: ${window.location.href}</p>`;
+            resultDiv.innerHTML += `<p>Origin: ${window.location.origin}</p>`;
+        }
+        
+        // Executar teste quando a página carregar
+        window.onload = testAPI;
+    </script>
+</body>
+</html>

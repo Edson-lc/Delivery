@@ -245,7 +245,7 @@ export default function EntregadorDetails({
               <div className="grid md:grid-cols-2 gap-6">
                 <FieldWithChange label="Rua" oldValue={atualEndereco?.rua} newValue={novosEndereco?.rua} />
                 <FieldWithChange label="Número" oldValue={atualEndereco?.numero} newValue={novosEndereco?.numero} />
-                <FieldWithChange label="Bairro" oldValue={atualEndereco?.bairro} newValue={novosEndereco?.bairro} />
+                <FieldWithChange label="Freguesia" oldValue={atualEndereco?.bairro} newValue={novosEndereco?.bairro} />
                 <FieldWithChange label="Cidade" oldValue={atualEndereco?.cidade} newValue={novosEndereco?.cidade} />
                 <FieldWithChange label="Código Postal" oldValue={atualEndereco?.cep} newValue={novosEndereco?.cep} />
               </div>

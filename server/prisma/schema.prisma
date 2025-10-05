@@ -50,10 +50,11 @@ model Restaurant {
   email                String?
   website              String?
   horarioFuncionamento String?    @map("horario_funcionamento")
-  tempoEntrega         Int?       @map("tempo_entrega")
+  tempoPreparo         Int?       @map("tempo_preparo")
   taxaEntrega          Float?     @map("taxa_entrega")
-  pedidoMinimo         Float?     @map("pedido_minimo")
-  ativo                Boolean    @default(true)
+  valorMinimo         Float?     @map("valor_minimo")
+  status               String     @default("ativo")
+  open                 Boolean    @default(true)
   imagemUrl            String?    @map("imagem_url")
   rating               Float?     @default(0)
   totalAvaliacoes      Int        @default(0) @map("total_avaliacoes")
@@ -120,27 +121,46 @@ model Order {
 }
 
 model Entregador {
-  id             String   @id @default(uuid())
-  createdDate    DateTime @default(now()) @map("created_date")
-  updatedDate    DateTime @default(now()) @map("updated_date")
-  createdBy      String?  @map("created_by")
-  nomeCompleto   String   @map("nome_completo")
-  email          String   @unique
+  id             String    @id @default(cuid())
+  createdDate    DateTime  @default(now()) @map("created_date")
+  updatedDate    DateTime  @default(now()) @map("updated_date")
+  createdBy      String?   @map("created_by")
+  nomeCompleto   String    @map("nome_completo")
+  email          String    @unique
   telefone       String
-  cpf            String   @unique
-  dataNascimento DateTime @map("data_nascimento")
-  endereco       String
-  cidade         String
-  codigoPostal   String?  @map("codigo_postal")
-  veiculo        String
-  placa          String?
-  status         String   @default("ativo")
-  avaliacao      Float?   @default(0)
-  totalEntregas  Int      @default(0) @map("total_entregas")
-  userId         String   @unique @map("user_id")
-  user           User     @relation(fields: [userId], references: [id])
+  nif            String?   @unique
+  dataNascimento DateTime? @map("data_nascimento")
+  endereco       Json?
+  fotoUrl        String?   @map("foto_url")
+  status         String    @default("ativo")
+  aprovado       Boolean   @default(false)
+  veiculoTipo    String?   @map("veiculo_tipo")
+  veiculoPlaca   String?   @map("veiculo_placa")
+  disponivel     Boolean?  @default(false)
+  avaliacao      Float?    @default(0)
+  totalEntregas  Int?      @default(0) @map("total_entregas")
+  latitude       Float?
+  longitude      Float?
+  iban           String?
+  nomeBanco      String?   @map("nome_banco")
+  ultimoLogin    DateTime? @map("ultimo_login")
+  userId         String?   @unique @map("user_id")
+  user           User?     @relation(fields: [userId], references: [id])
 
   @@map("entregadores")
+}
+
+model AlteracaoPerfil {
+  id           String   @id @default(cuid())
+  createdDate  DateTime @default(now()) @map("created_date")
+  updatedDate  DateTime @default(now()) @map("updated_date")
+  entregadorId String   @map("entregador_id")
+  dadosAntigos Json     @map("dados_antigos")
+  dadosNovos   Json     @map("dados_novos")
+  status       String   @default("pendente")
+  observacoes  String?
+
+  @@map("alteracoes_perfil")
 }
 
 model Cart {

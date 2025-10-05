@@ -25,6 +25,7 @@ import CartModal from "../components/ui/CartModal";
 import FloatingCart from "../components/ui/FloatingCart";
 import { toast, Toaster } from "sonner"; // Added Toaster import
 import { useAuth } from "../contexts/AuthContext"; // Import useAuth
+import { getCategoryIcon, getCategoryColor } from "../utils/categoryIcons";
 
 export default function RestaurantMenuPage() {
   const [restaurant, setRestaurant] = useState(null);
@@ -107,7 +108,7 @@ export default function RestaurantMenuPage() {
 
   const filterAndGroupItems = useCallback(() => {
     let filtered = menuItems.filter(item =>
-      item.nome.toLowerCase().includes(searchTerm.toLowerCase())
+      item.nome && item.nome.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     const grouped = filtered.reduce((acc, item) => {
@@ -146,9 +147,8 @@ export default function RestaurantMenuPage() {
     const cartPayload = {
       ...newCartData,
       subtotal,
-      session_id: sessionId, // Use state sessionId
-      restaurant_id: restaurantId,
-      data_atualizacao: new Date().toISOString()
+      sessionId: sessionId, // Use state sessionId
+      restaurantId: restaurantId
     };
 
     try {
@@ -157,7 +157,7 @@ export default function RestaurantMenuPage() {
         await Cart.update(cart.id, cartPayload);
         updatedCart = { ...cartPayload, id: cart.id };
       } else {
-        const newCart = await Cart.create({ ...cartPayload, data_criacao: new Date().toISOString() });
+        const newCart = await Cart.create(cartPayload);
         updatedCart = { ...cartPayload, id: newCart.id };
       }
       setCart(updatedCart);
@@ -342,16 +342,23 @@ export default function RestaurantMenuPage() {
           <aside className="hidden lg:block lg:col-span-3 py-4">
             <div className="sticky top-20 space-y-1">
               <h3 className="font-bold text-lg px-2 mb-3">Categorias</h3>
-              {categories.map(category => (
-                <a
-                  key={category}
-                  href={`#category-${category}`}
-                  onClick={(e) => { e.preventDefault(); document.getElementById(`category-${category}`).scrollIntoView({ behavior: 'smooth' }); setActiveCategory(category); }}
-                  className={`block px-3 py-2 rounded-lg capitalize transition-colors text-sm ${activeCategory === category ? 'bg-orange-100 text-orange-700 font-semibold' : 'hover:bg-gray-100'}`}
-                >
-                  {category.replace(/_/g, ' ')}
-                </a>
-              ))}
+              {categories.map(category => {
+                const CategoryIcon = getCategoryIcon(category);
+                const categoryColor = getCategoryColor(category);
+                return (
+                  <a
+                    key={category}
+                    href={`#category-${category}`}
+                    onClick={(e) => { e.preventDefault(); document.getElementById(`category-${category}`).scrollIntoView({ behavior: 'smooth' }); setActiveCategory(category); }}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg capitalize transition-colors text-sm ${
+                      activeCategory === category ? 'bg-orange-100 text-orange-700 font-semibold' : 'hover:bg-gray-100'
+                    }`}
+                  >
+                    <CategoryIcon className={`w-4 h-4 ${activeCategory === category ? 'text-orange-700' : categoryColor}`} />
+                    {category.replace(/_/g, ' ')}
+                  </a>
+                );
+              })}
             </div>
           </aside>
 
@@ -361,7 +368,7 @@ export default function RestaurantMenuPage() {
               <CardContent className="p-4 sm:p-6">
                 <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900">{restaurant?.nome}</h1>
                 <div className="flex flex-wrap gap-x-3 gap-y-2 mt-3 text-xs sm:text-sm text-gray-600">
-                    <div className="flex items-center gap-1"><ThumbsUp className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" /> <span>{restaurant?.avaliacao?.toFixed(1) || '4.5'} (500+)</span></div>
+                    <div className="flex items-center gap-1"><ThumbsUp className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" /> <span>{restaurant?.rating?.toFixed(1) || '4.5'} (500+)</span></div>
                     <div className="flex items-center gap-1"><Clock className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" /> <span>{restaurant?.tempo_preparo || 30}-{(restaurant?.tempo_preparo || 30) + 15} min</span></div>
                     <div className="flex items-center gap-1"><Bike className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" /> <span>€{restaurant?.taxa_entrega?.toFixed(2) || "2.50"}</span></div>
                 </div>
@@ -371,10 +378,10 @@ export default function RestaurantMenuPage() {
             {/* Search Bar */}
             <div className="mt-4 sm:mt-6">
               <div className="relative mb-4 sm:mb-6">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5"/>
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 z-10"/>
                 <Input
                   placeholder={`Procurar em ${restaurant?.nome || 'restaurante'}`}
-                  className="pl-9 sm:pl-10 h-10 sm:h-12 text-sm sm:text-base"
+                  className="pl-10 h-12"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -383,20 +390,27 @@ export default function RestaurantMenuPage() {
               {/* Mobile Categories Navigation */}
               <div className="lg:hidden mb-4">
                 <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                  {categories.map(category => (
-                    <button
-                      key={category}
-                      onClick={() => {
-                        document.getElementById(`category-${category}`).scrollIntoView({ behavior: 'smooth' });
-                        setActiveCategory(category);
-                      }}
-                      className={`px-3 py-2 rounded-lg capitalize transition-colors text-sm whitespace-nowrap ${
-                        activeCategory === category ? 'bg-orange-100 text-orange-700 font-semibold' : 'bg-gray-100 hover:bg-gray-200'
-                      }`}
-                    >
-                      {category.replace(/_/g, ' ')}
-                    </button>
-                  ))}
+                  {categories.map(category => {
+                    const CategoryIcon = getCategoryIcon(category);
+                    const categoryColor = getCategoryColor(category);
+                    return (
+                      <button
+                        key={category}
+                        onClick={() => {
+                          document.getElementById(`category-${category}`).scrollIntoView({ behavior: 'smooth' });
+                          setActiveCategory(category);
+                        }}
+                        className={`px-4 py-2.5 rounded-full capitalize transition-all duration-200 text-sm font-medium whitespace-nowrap border flex items-center gap-2 ${
+                          activeCategory === category 
+                            ? 'bg-orange-500 text-white border-orange-500 shadow-md' 
+                            : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50 hover:border-gray-300'
+                        }`}
+                      >
+                        <CategoryIcon className={`w-4 h-4 ${activeCategory === category ? 'text-white' : categoryColor}`} />
+                        {category.replace(/_/g, ' ')}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -407,25 +421,27 @@ export default function RestaurantMenuPage() {
               )}
 
               <div className="space-y-6 sm:space-y-8">
-                {Object.entries(groupedItems).map(([category, items]) => (
-                  <section key={category} id={`category-${category}`}>
-                    <h2 className="text-xl sm:text-2xl font-bold capitalize flex items-center gap-2 mb-3 sm:mb-4">
-                      <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-500"/>
-                      {category.replace(/_/g, ' ')}
-                    </h2>
-                    <div className="divide-y border-t border-b">
-                      {items.map(item => (
-                        <MenuItemCard key={item.id} item={item} onAddToCart={addToCart} onItemAdded={handleItemAdded} />
-                      ))}
-                    </div>
-                  </section>
-                ))}
+                {Object.entries(groupedItems).map(([category, items]) => {
+                  return (
+                    <section key={category} id={`category-${category}`}>
+                      <h2 className="text-xl sm:text-2xl font-bold capitalize flex items-center gap-2 mb-3 sm:mb-4">
+                        <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-500"/>
+                        {category.replace(/_/g, ' ')}
+                      </h2>
+                      <div className="divide-y border-t border-b">
+                        {items.map(item => (
+                          <MenuItemCard key={item.id} item={item} onAddToCart={addToCart} onItemAdded={handleItemAdded} />
+                        ))}
+                      </div>
+                    </section>
+                  );
+                })}
               </div>
             </div>
           </div>
 
           {/* Sidebar Carrinho - Desktop only */}
-          <aside className="hidden lg:block lg:col-span-3 py-4">
+          <aside id="cart-sidebar-container" className="hidden lg:block lg:col-span-3 py-4">
             <div className="sticky top-20">
               {/* Ensure cart is not null before passing */}
               {cart && (

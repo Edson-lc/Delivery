@@ -13,19 +13,39 @@ const categories = [
 ];
 
 export default function RestaurantForm({ restaurant, onSubmit, onCancel }) {
-  const [formData, setFormData] = useState(restaurant || {
-    nome: "",
-    descricao: "",
-    categoria: "brasileira",
-    endereco: "",
-    telefone: "",
-    email: "",
-    tempo_preparo: 30,
-    taxa_entrega: 5.00,
-    valor_minimo: 20.00,
-    status: "ativo",
-    avaliacao: 0,
-    imagem_url: ""
+  const [formData, setFormData] = useState(() => {
+    const defaultData = {
+      nome: "",
+      descricao: "",
+      categoria: "brasileira",
+      endereco: "",
+      cidade: "",
+      telefone: "",
+      email: "",
+      tempo_preparo: 30,
+      taxa_entrega: 5.00,
+      valor_minimo: 20.00,
+      status: "ativo",
+      open: true,
+      avaliacao: 0,
+      imagem_url: ""
+    };
+
+    if (restaurant) {
+      return {
+        ...defaultData,
+        ...restaurant,
+        tempo_preparo: restaurant.tempo_preparo ?? restaurant.tempoEntrega ?? 30,
+        taxa_entrega: restaurant.taxa_entrega ?? restaurant.taxaEntrega ?? 5.00,
+        valor_minimo: restaurant.valor_minimo ?? restaurant.pedidoMinimo ?? 20.00,
+        avaliacao: restaurant.avaliacao ?? restaurant.rating ?? 0,
+        imagem_url: restaurant.imagem_url ?? restaurant.imagemUrl ?? "",
+        status: restaurant.status ?? "ativo",
+        open: restaurant.open ?? true
+      };
+    }
+
+    return defaultData;
   });
 
   const handleSubmit = (e) => {
@@ -139,6 +159,17 @@ export default function RestaurantForm({ restaurant, onSubmit, onCancel }) {
               </div>
 
               <div className="space-y-2">
+                <Label htmlFor="cidade">Cidade *</Label>
+                <Input
+                  id="cidade"
+                  value={formData.cidade}
+                  onChange={(e) => handleInputChange('cidade', e.target.value)}
+                  placeholder="Lisboa"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="telefone">Telefone *</Label>
                 <Input
                   id="telefone"
@@ -176,6 +207,22 @@ export default function RestaurantForm({ restaurant, onSubmit, onCancel }) {
                   </SelectContent>
                 </Select>
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="open">Aberto/Fechado</Label>
+                <Select
+                  value={formData.open ? "true" : "false"}
+                  onValueChange={(value) => handleInputChange('open', value === "true")}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="true">Aberto</SelectItem>
+                    <SelectItem value="false">Fechado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 
@@ -189,8 +236,8 @@ export default function RestaurantForm({ restaurant, onSubmit, onCancel }) {
                 <Input
                   id="tempo_preparo"
                   type="number"
-                  value={formData.tempo_preparo}
-                  onChange={(e) => handleInputChange('tempo_preparo', parseInt(e.target.value))}
+                  value={formData.tempo_preparo || ""}
+                  onChange={(e) => handleInputChange('tempo_preparo', e.target.value ? parseInt(e.target.value) : 30)}
                   placeholder="30"
                   min="1"
                 />
@@ -202,8 +249,8 @@ export default function RestaurantForm({ restaurant, onSubmit, onCancel }) {
                   id="taxa_entrega"
                   type="number"
                   step="0.01"
-                  value={formData.taxa_entrega}
-                  onChange={(e) => handleInputChange('taxa_entrega', parseFloat(e.target.value))}
+                  value={formData.taxa_entrega || ""}
+                  onChange={(e) => handleInputChange('taxa_entrega', e.target.value ? parseFloat(e.target.value) : 5.00)}
                   placeholder="5.00"
                   min="0"
                 />
@@ -215,8 +262,8 @@ export default function RestaurantForm({ restaurant, onSubmit, onCancel }) {
                   id="valor_minimo"
                   type="number"
                   step="0.01"
-                  value={formData.valor_minimo}
-                  onChange={(e) => handleInputChange('valor_minimo', parseFloat(e.target.value))}
+                  value={formData.valor_minimo || ""}
+                  onChange={(e) => handleInputChange('valor_minimo', e.target.value ? parseFloat(e.target.value) : 20.00)}
                   placeholder="20.00"
                   min="0"
                 />

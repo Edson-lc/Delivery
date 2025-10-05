@@ -31,6 +31,8 @@ import { ptBR } from "date-fns/locale";
 import UserForm from "../components/users/UserForm";
 import UserCard from "../components/users/UserCard";
 
+import { normalizeAddressValue } from "@/utils/entregadorAddress";
+
 export default function UsuariosPage() {
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
@@ -282,4 +284,3 @@ export default function UsuariosPage() {
     </div>
   );
 }
-import { normalizeAddressValue } from "@/utils/entregadorAddress";

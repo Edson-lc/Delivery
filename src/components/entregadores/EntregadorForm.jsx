@@ -200,12 +200,12 @@ export default function EntregadorForm({ entregador, onSubmit, onCancel }) {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="bairro">Bairro</Label>
+                <Label htmlFor="bairro">Freguesia</Label>
                 <Input 
                   id="bairro" 
                   value={formData.endereco?.bairro || ''} 
                   onChange={(e) => handleAddressChange('bairro', e.target.value)} 
-                  placeholder="Nome do bairro"
+                  placeholder="Nome da freguesia"
                 />
               </div>
               
