@@ -464,8 +464,7 @@ export default function CheckoutPage() {
               variant="ghost"
               onClick={() => window.location.href = createPageUrl(`RestaurantMenu?id=${restaurant.id}`)}
             >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Voltar ao Menu
+              <ArrowLeft className="w-4 h-4" />
             </Button>
             <h1 className="text-xl font-bold">Finalizar Pedido</h1>
           </div>

@@ -56,6 +56,7 @@ export default function RelatoriosPage() {
     ordersByStatus: [],
   });
   
+  const [allOrders, setAllOrders] = useState([]); // Estado para todos os pedidos
   const [isLoading, setIsLoading] = useState(true);
   const [selectedTab, setSelectedTab] = useState("overview");
 
@@ -88,9 +89,12 @@ export default function RelatoriosPage() {
       const endDate = new Date(dateRange.end);
 
       const [orders, restaurants] = await Promise.all([
-        Order.list('-created_date'),
+        Order.list('-created_date', 1000), // Aumentado para ter dados dos últimos 6 meses
         Restaurant.list('-created_date'),
       ]);
+
+      // Armazenar todos os pedidos para uso nos componentes
+      setAllOrders(orders);
 
       const filteredOrders = orders.filter(order => {
         const orderDate = new Date(order.created_date);
@@ -295,11 +299,11 @@ export default function RelatoriosPage() {
           </TabsContent>
 
           <TabsContent value="revenue">
-            <RevenueAnalysis data={reportData} />
+            <RevenueAnalysis data={reportData} allOrders={allOrders} />
           </TabsContent>
 
           <TabsContent value="restaurants">
-            <RestaurantRanking restaurants={reportData.topRestaurants} />
+            <RestaurantRanking restaurants={reportData.topRestaurants} allOrders={allOrders} />
           </TabsContent>
         </Tabs>
       </div>

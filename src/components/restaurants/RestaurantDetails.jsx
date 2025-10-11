@@ -104,7 +104,7 @@ export default function RestaurantDetails({ restaurant, onBack, onEdit }) {
           </div>
 
           <div className="absolute top-4 right-4">
-            <Badge className={`${statusColors[restaurant.status]} border font-medium`}>
+            <Badge className={`${statusColors[restaurant.status]} border font-medium pointer-events-none`}>
               {statusLabels[restaurant.status]}
             </Badge>
           </div>
@@ -266,7 +266,7 @@ export default function RestaurantDetails({ restaurant, onBack, onEdit }) {
           </div>
 
           {restaurant.descricao && (
-            <Card className="border-none shadow-lg bg-white/80 backdrop-blur-sm">
+            <Card className="border-none shadow-lg bg-white/80 backdrop-blur-sm mt-6">
               <CardHeader>
                 <CardTitle>Sobre o Restaurante</CardTitle>
               </CardHeader>

@@ -34,6 +34,29 @@ app.use(compression());
 // Rate limiting geral
 app.use(generalLimiter);
 
+// Endpoint temporário para resetar rate limiting (apenas em desenvolvimento)
+if (!env.IS_PRODUCTION) {
+  app.post('/api/reset-rate-limit', (req, res) => {
+    // Resetar rate limiting para o IP atual
+    const key = `${req.ip}-${req.get('User-Agent') || 'unknown'}`;
+    // Note: express-rate-limit não tem método direto para resetar, mas podemos ignorar temporariamente
+    res.json({ message: 'Rate limit reset requested', ip: req.ip });
+  });
+  
+  // Endpoint para verificar status do servidor
+  app.get('/api/status', (req, res) => {
+    res.json({
+      status: 'ok',
+      environment: env.NODE_ENV,
+      cors_origin: env.CORS_ORIGIN,
+      rate_limit_window: env.RATE_LIMIT_WINDOW_MS,
+      rate_limit_max: env.RATE_LIMIT_MAX_REQUESTS,
+      is_production: env.IS_PRODUCTION,
+      timestamp: new Date().toISOString()
+    });
+  });
+}
+
 // CORS seguro e restritivo
 const corsOptions = {
   origin: (origin: string | undefined, callback: Function) => {
@@ -83,7 +106,38 @@ const corsOptions = {
         'http://82.155.88.172:5178',
         'http://82.155.88.172:5179',
         'http://82.155.88.172:5180',
-        'http://82.155.88.172:5181'
+        'http://82.155.88.172:5181',
+        // DDNS - ama.ddns.net
+        'http://ama.ddns.net',
+        'https://ama.ddns.net',
+        'http://ama.ddns.net:80',
+        'https://ama.ddns.net:443',
+        'http://ama.ddns.net:5173',
+        'https://ama.ddns.net:5173',
+        'http://ama.ddns.net:5174',
+        'https://ama.ddns.net:5174',
+        'http://ama.ddns.net:5175',
+        'https://ama.ddns.net:5175',
+        'http://ama.ddns.net:5176',
+        'https://ama.ddns.net:5176',
+        'http://ama.ddns.net:5177',
+        'https://ama.ddns.net:5177',
+        'http://ama.ddns.net:5178',
+        'https://ama.ddns.net:5178',
+        'http://ama.ddns.net:5179',
+        'https://ama.ddns.net:5179',
+        'http://ama.ddns.net:5180',
+        'https://ama.ddns.net:5180',
+        'http://ama.ddns.net:5181',
+        'https://ama.ddns.net:5181',
+        'http://ama.ddns.net:3000',
+        'https://ama.ddns.net:3000',
+        'http://ama.ddns.net:4000',
+        'https://ama.ddns.net:4000',
+        'http://ama.ddns.net:8080',
+        'https://ama.ddns.net:8080',
+        'http://ama.ddns.net:8081',
+        'https://ama.ddns.net:8081'
       ];
       if (allowedDevOrigins.includes(origin)) {
         return callback(null, true);

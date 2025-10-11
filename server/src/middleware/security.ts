@@ -21,7 +21,7 @@ export const authLimiter = rateLimit({
 // Rate limiting geral
 export const generalLimiter = rateLimit({
   windowMs: env.RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000, // 15 minutos
-  max: env.RATE_LIMIT_MAX_REQUESTS || 1000, // 1000 requests por 15 minutos
+  max: env.RATE_LIMIT_MAX_REQUESTS || (env.IS_PRODUCTION ? 1000 : 10000), // Mais permissivo em desenvolvimento
   message: {
     error: {
       code: 'TOO_MANY_REQUESTS',
@@ -30,6 +30,11 @@ export const generalLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
+  skipSuccessfulRequests: false, // Contar todos os requests
+  keyGenerator: (req) => {
+    // Usar IP + User-Agent para evitar conflitos entre diferentes clientes
+    return `${req.ip}-${req.get('User-Agent') || 'unknown'}`;
+  }
 });
 
 // Rate limiting para criação de recursos

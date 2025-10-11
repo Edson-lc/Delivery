@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Restaurant, MenuItem, User } from "@/api/entities";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -98,10 +98,16 @@ export default function RestaurantesPage() {
     setSelectedRestaurant(restaurant);
   };
 
-  const categories = [
-    "todas", "brasileira", "italiana", "japonesa", "chinesa", "arabe", 
-    "mexicana", "hamburguer", "pizza", "saudavel", "sobremesas", "lanches", "outros"
-  ];
+  // Calcular categorias que têm restaurantes
+  const availableCategories = useMemo(() => {
+    const categorySet = new Set();
+    restaurants.forEach(restaurant => {
+      if (restaurant.categoria) {
+        categorySet.add(restaurant.categoria);
+      }
+    });
+    return ["todas", ...Array.from(categorySet).sort()];
+  }, [restaurants]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 p-4 md:p-8">
@@ -153,7 +159,7 @@ export default function RestaurantesPage() {
                 onChange={(e) => setCategoryFilter(e.target.value)}
                 className="px-3 py-2 border border-gray-200 rounded-lg bg-white text-sm"
               >
-                {categories.map(category => (
+                {availableCategories.map(category => (
                   <option key={category} value={category}>
                     {category === 'todas' ? 'Todas as Categorias' : 
                      category.charAt(0).toUpperCase() + category.slice(1)}
@@ -181,7 +187,7 @@ export default function RestaurantesPage() {
             onEdit={handleEdit}
           />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {isLoading ? (
               Array(6).fill(0).map((_, i) => (
                 <Card key={i} className="border-none shadow-lg animate-pulse">

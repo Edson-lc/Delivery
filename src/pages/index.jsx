@@ -35,9 +35,13 @@ import PerfilEntregador from "./PerfilEntregador";
 
 import DefinicoesEntregador from "./DefinicoesEntregador";
 
+import Definicoes from "./Definicoes";
+
 import EntregasRecentes from "./EntregasRecentes";
 
 import RestaurantDashboard from "./RestaurantDashboard";
+
+import GerirCardapio from "./GerirCardapio";
 
 import DatabaseScripts from "./DatabaseScripts";
 import Login from "./Login";
@@ -85,6 +89,8 @@ const PAGES = {
     EntregasRecentes: EntregasRecentes,
     
     RestaurantDashboard: RestaurantDashboard,
+    
+    GerirCardapio: GerirCardapio,
     
     DatabaseScripts: DatabaseScripts,
     
@@ -150,10 +156,13 @@ function PagesContent() {
                 
                 <Route path="/DefinicoesEntregador" element={<DefinicoesEntregador />} />
                 
+                <Route path="/Definicoes" element={<Definicoes />} />
+                
                 <Route path="/EntregasRecentes" element={<EntregasRecentes />} />
                 
-                <Route path="/RestaurantDashboard" element={<RestaurantDashboard />} />
                 <Route path="/restaurantedashboard" element={<RestaurantDashboard />} />
+                
+                <Route path="/GerirCardapio" element={<GerirCardapio />} />
                 
                 <Route path="/DatabaseScripts" element={<DatabaseScripts />} />
                 <Route path="/Login" element={<Login />} />

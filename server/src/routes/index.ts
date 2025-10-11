@@ -19,9 +19,10 @@ const router = Router();
 router.use('/public', publicRouter);
 router.use('/auth', authRouter);
 
-// Rotas protegidas (com autenticaÃ§Ã£o)
+// Middleware de autenticação para rotas protegidas
 router.use(authenticate);
 
+// Rotas protegidas (com autenticação)
 router.use('/restaurants', requireRole(['admin', 'restaurante']), restaurantsRouter);
 router.use('/menu-items', requireRole(['admin', 'restaurante']), menuItemsRouter);
 router.use('/orders', requireRole(['admin', 'restaurante', 'entregador', 'cliente', 'user']), ordersRouter);

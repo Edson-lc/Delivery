@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Restaurant, Order } from "@/api/entities";
+import { Restaurant, Order, Entregador } from "@/api/entities";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,7 +13,8 @@ import {
   Clock,
   Star,
   AlertCircle,
-  CheckCircle
+  CheckCircle,
+  Truck
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -29,6 +30,7 @@ export default function Dashboard() {
     pedidosHoje: 0,
     faturamentoHoje: 0,
     restaurantesAtivos: 0,
+    entregadoresAtivos: 0,
   });
   const [recentOrders, setRecentOrders] = useState([]);
   const [topRestaurants, setTopRestaurants] = useState([]);
@@ -41,9 +43,10 @@ export default function Dashboard() {
   const loadDashboardData = async () => {
     setIsLoading(true);
     try {
-      const [orders, restaurants] = await Promise.all([
-        Order.list('-created_date', 50),
+      const [orders, restaurants, entregadores] = await Promise.all([
+        Order.list('-created_date', 500), // Aumentado para ter dados das últimas 2 semanas
         Restaurant.list('-created_date'),
+        Entregador.list('-created_date'),
       ]);
 
       const hoje = new Date().toDateString();
@@ -58,12 +61,17 @@ export default function Dashboard() {
       const restaurantesAtivos = restaurants.filter(restaurant => 
         restaurant.status === 'ativo'
       ).length;
+
+      const entregadoresAtivos = entregadores.filter(entregador => 
+        entregador.status === 'ativo' || entregador.status === 'disponivel'
+      ).length;
       
       setStats({
         totalPedidos: orders.length,
         pedidosHoje: pedidosHoje.length,
         faturamentoHoje,
         restaurantesAtivos,
+        entregadoresAtivos,
       });
 
       setRecentOrders(orders.slice(0, 10));
@@ -130,7 +138,7 @@ export default function Dashboard() {
         {/* Conteúdo Principal */}
         <div className="grid lg:grid-cols-3 gap-6 mt-8">
           <div className="lg:col-span-2 space-y-6">
-            <RevenueChart />
+            <RevenueChart orders={recentOrders} isLoading={isLoading} />
             <RecentOrders orders={recentOrders} isLoading={isLoading} />
           </div>
 
@@ -165,6 +173,13 @@ export default function Dashboard() {
                     <p className="font-semibold text-orange-700">{stats.restaurantesAtivos} ativos</p>
                   </div>
                   <div className={`w-3 h-3 rounded-full animate-pulse ${stats.restaurantesAtivos > 0 ? 'bg-orange-500' : 'bg-gray-400'}`}></div>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                  <div>
+                    <p className="text-sm text-gray-600">Entregadores Ativos</p>
+                    <p className="font-semibold text-blue-700">{stats.entregadoresAtivos} ativos</p>
+                  </div>
+                  <div className={`w-3 h-3 rounded-full animate-pulse ${stats.entregadoresAtivos > 0 ? 'bg-blue-500' : 'bg-gray-400'}`}></div>
                 </div>
               </div>
             </CardContent>

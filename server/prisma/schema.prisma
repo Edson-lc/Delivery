@@ -58,6 +58,8 @@ model Restaurant {
   imagemUrl            String?    @map("imagem_url")
   rating               Float?     @default(0)
   totalAvaliacoes      Int        @default(0) @map("total_avaliacoes")
+  latitude             Float?
+  longitude            Float?
   menuItems            MenuItem[]
   orders               Order[]
   users                User[]
@@ -114,8 +116,15 @@ model Order {
   nomeTitular     String?    @map("nome_titular")
   observacoes     String?
   dataEntrega     DateTime?  @map("data_entrega")
+  dataConfirmacao DateTime?  @map("data_confirmacao")
+  tempoPreparo    Int?       @map("tempo_preparo")
+  tempoPreparoAlterado Boolean @default(false) @map("tempo_preparo_alterado")
+  tempoAdicional  Int?       @default(0) @map("tempo_adicional")
+  tempoAtraso     Int?       @map("tempo_atraso")
   restaurantId    String     @map("restaurant_id")
   restaurant      Restaurant @relation(fields: [restaurantId], references: [id])
+  entregadorId    String?    @map("entregador_id")
+  entregador      Entregador? @relation(fields: [entregadorId], references: [id])
 
   @@map("orders")
 }
@@ -146,6 +155,7 @@ model Entregador {
   ultimoLogin    DateTime? @map("ultimo_login")
   userId         String?   @unique @map("user_id")
   user           User?     @relation(fields: [userId], references: [id])
+  orders         Order[]
 
   @@map("entregadores")
 }

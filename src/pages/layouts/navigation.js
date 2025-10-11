@@ -44,22 +44,22 @@ export const adminNavigationItems = [
 export const restaurantNavigationItems = [
   {
     title: "Dashboard",
-    url: createPageUrl("RestaurantDashboard"),
+    url: createPageUrl("restaurantedashboard"),
     icon: LayoutDashboard,
   },
   {
     title: "Pedidos",
-    url: createPageUrl("RestaurantDashboard?tab=orders"),
+    url: createPageUrl("restaurantedashboard?tab=orders"),
     icon: ShoppingBag,
   },
   {
     title: "Cardápio",
-    url: createPageUrl("RestaurantDashboard?tab=menu"),
+    url: createPageUrl("restaurantedashboard?tab=menu"),
     icon: Store,
   },
   {
     title: "Relatórios",
-    url: createPageUrl("RestaurantDashboard?tab=reports"),
+    url: createPageUrl("restaurantedashboard?tab=reports"),
     icon: BarChart3,
   },
 ];
@@ -80,4 +80,4 @@ export const noLayoutPages = [
   "EntregasRecentes",
 ];
 
-export const restaurantPages = ["RestaurantDashboard"];
+export const restaurantPages = ["restaurantedashboard", "GerirCardapio"];

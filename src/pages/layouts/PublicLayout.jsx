@@ -7,15 +7,29 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/contexts/AuthContext";
 import { createPageUrl } from "@/utils";
-import { LogOut, User as UserIcon } from "lucide-react";
+import { LogOut, User as UserIcon, Search, X, ChefHat, Settings } from "lucide-react";
 import SearchBar from "@/components/public/SearchBar";
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+
+// Componente memo para o botão de logout
+const LogoutButton = memo(({ onClick }) => (
+  <DropdownMenuItem
+    onClick={onClick}
+    className="flex items-center text-red-600 focus:text-red-600 focus:bg-red-50"
+  >
+    <LogOut className="w-4 h-4 mr-2" />
+    Terminar Sessão
+  </DropdownMenuItem>
+));
+
+LogoutButton.displayName = 'LogoutButton';
 
 export function PublicLayout({ children }) {
   const { currentUser, logout } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [isRestaurantPage, setIsRestaurantPage] = useState(false);
+  const [showMobileSearch, setShowMobileSearch] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   
@@ -25,10 +39,12 @@ export function PublicLayout({ children }) {
       const path = location.pathname.toLowerCase();
       // Detectar página de restaurante - rota é /restaurantmenu (minúsculo)
       // Detectar página de login - rota é /login (minúsculo)
+      // Detectar página de dashboard do restaurante - rota é /restaurantedashboard (minúsculo)
       const isRestaurant = path === '/restaurantmenu' || path.includes('/restaurantmenu');
       const isLogin = path === '/login' || path.includes('/login');
-      const shouldHideSearch = isRestaurant || isLogin;
-      console.log('🔍 Detecção de página:', { path, isRestaurant, isLogin, shouldHideSearch });
+      const isRestaurantDashboard = path === '/restaurantedashboard' || path.includes('/restaurantedashboard');
+      const shouldHideSearch = isRestaurant || isLogin || isRestaurantDashboard;
+      console.log('🔍 Detecção de página:', { path, isRestaurant, isLogin, isRestaurantDashboard, shouldHideSearch });
       setIsRestaurantPage(shouldHideSearch);
     };
 
@@ -46,6 +62,8 @@ export function PublicLayout({ children }) {
 
   const handleSearch = (term) => {
     setSearchTerm(term);
+    // Fechar a pesquisa mobile após pesquisar
+    setShowMobileSearch(false);
     // Usar navigate em vez de window.location.href para não recarregar a página
     if (term) {
       navigate(`/Home?search=${encodeURIComponent(term)}`);
@@ -84,7 +102,7 @@ export function PublicLayout({ children }) {
               {currentUser ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="flex items-center gap-2 p-2">
+                    <Button variant="ghost" className="flex items-center gap-3 py-4 px-4 hover:bg-gray-100">
                       <img
                         src={
                           currentUser.foto_url ||
@@ -107,22 +125,38 @@ export function PublicLayout({ children }) {
                           currentUser.tipo_usuario === "entregador"
                             ? createPageUrl("PainelEntregador")
                             : currentUser.tipo_usuario === "restaurante"
-                              ? createPageUrl("RestaurantDashboard")
+                              ? createPageUrl("restaurantedashboard")
                               : createPageUrl("MinhaConta")
                         }
                         className="flex items-center"
                       >
                         <UserIcon className="w-4 h-4 mr-2" />
-                        {currentUser.tipo_usuario === "restaurante" ? "Painel Restaurante" : "Meu Painel"}
+                        {currentUser.tipo_usuario === "restaurante" ? "Perfil do Restaurante" : "Meu Perfil"}
                       </a>
                     </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={handleLogout}
-                      className="flex items-center text-red-600 focus:text-red-600 focus:bg-red-50"
-                    >
-                      <LogOut className="w-4 h-4 mr-2" />
-                      Sair
-                    </DropdownMenuItem>
+                    {currentUser.tipo_usuario === "restaurante" && (
+                      <DropdownMenuItem asChild>
+                        <a
+                          href={createPageUrl("restaurantedashboard") + "?showCardapio=true"}
+                          className="flex items-center"
+                        >
+                          <ChefHat className="w-4 h-4 mr-2" />
+                          Gerir Cardápio
+                        </a>
+                      </DropdownMenuItem>
+                    )}
+                    {currentUser.tipo_usuario === "restaurante" && (
+                      <DropdownMenuItem asChild>
+                        <a
+                          href={createPageUrl("Definicoes")}
+                          className="flex items-center"
+                        >
+                          <Settings className="w-4 h-4 mr-2" />
+                          Definições
+                        </a>
+                      </DropdownMenuItem>
+                    )}
+                    <LogoutButton onClick={handleLogout} />
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
@@ -139,8 +173,8 @@ export function PublicLayout({ children }) {
 
           {/* Mobile Layout - Duas linhas */}
           <div className="md:hidden">
-            {/* Primeira linha: Logo + Login */}
-            <div className="flex items-center justify-between h-14 px-2">
+            {/* Primeira linha: Logo + Login + Pesquisa */}
+            <div className="flex items-center h-14 px-2">
               {/* Logo */}
               <div className="flex-shrink-0">
                 <a href={createPageUrl("Home")} className="flex items-center gap-2">
@@ -151,12 +185,28 @@ export function PublicLayout({ children }) {
                 </a>
               </div>
 
+              {/* Spacer para empurrar elementos para a direita */}
+              <div className="flex-1"></div>
+
+              {/* Ícone de Pesquisa - Só aparece fora da página de restaurante e login, quando pesquisa não está visível */}
+              {!isRestaurantPage && !showMobileSearch && (
+                <div className="flex-shrink-0 mr-2">
+                  <Button
+                    variant="ghost"
+                    onClick={() => setShowMobileSearch(true)}
+                    className="p-2 hover:bg-gray-100"
+                  >
+                    <Search className="w-5 h-5 text-gray-600" />
+                  </Button>
+                </div>
+              )}
+
               {/* Login/Perfil */}
               <div className="flex-shrink-0">
                 {currentUser ? (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="flex items-center gap-1 p-2">
+                      <Button variant="ghost" className="flex items-center gap-2 py-4 px-4 hover:bg-gray-100">
                         <img
                           src={
                             currentUser.foto_url ||
@@ -179,22 +229,38 @@ export function PublicLayout({ children }) {
                             currentUser.tipo_usuario === "entregador"
                               ? createPageUrl("PainelEntregador")
                               : currentUser.tipo_usuario === "restaurante"
-                                ? createPageUrl("RestaurantDashboard")
+                                ? createPageUrl("restaurantedashboard")
                                 : createPageUrl("MinhaConta")
                           }
                           className="flex items-center"
                         >
                           <UserIcon className="w-4 h-4 mr-2" />
-                          {currentUser.tipo_usuario === "restaurante" ? "Painel Restaurante" : "Meu Painel"}
+                          {currentUser.tipo_usuario === "restaurante" ? "Perfil do Restaurante" : "Meu Perfil"}
                         </a>
                       </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={handleLogout}
-                        className="flex items-center text-red-600 focus:text-red-600 focus:bg-red-50"
-                      >
-                        <LogOut className="w-4 h-4 mr-2" />
-                        Sair
-                      </DropdownMenuItem>
+                      {currentUser.tipo_usuario === "restaurante" && (
+                        <DropdownMenuItem asChild>
+                          <a
+                            href={createPageUrl("restaurantedashboard") + "?showCardapio=true"}
+                            className="flex items-center"
+                          >
+                            <ChefHat className="w-4 h-4 mr-2" />
+                            Gerir Cardápio
+                          </a>
+                        </DropdownMenuItem>
+                      )}
+                      {currentUser.tipo_usuario === "restaurante" && (
+                        <DropdownMenuItem asChild>
+                          <a
+                            href={createPageUrl("Definicoes")}
+                            className="flex items-center"
+                          >
+                            <Settings className="w-4 h-4 mr-2" />
+                            Definições
+                          </a>
+                        </DropdownMenuItem>
+                      )}
+                      <LogoutButton onClick={handleLogout} />
                     </DropdownMenuContent>
                   </DropdownMenu>
                 ) : (
@@ -209,13 +275,22 @@ export function PublicLayout({ children }) {
               </div>
             </div>
 
-            {/* Segunda linha: Barra de Pesquisa - Só aparece fora da página de restaurante e login */}
-            {!isRestaurantPage && (
-              <div className="px-3 pb-3">
-                <SearchBar 
-                  onSearch={handleSearch}
-                  placeholder="Buscar restaurantes..."
-                />
+            {/* Segunda linha: Barra de Pesquisa Expandida - Só aparece quando clicada e fora da página de restaurante e login */}
+            {!isRestaurantPage && showMobileSearch && (
+              <div className="px-3 pb-3 bg-white">
+                <div className="flex items-center gap-2">
+                  <SearchBar 
+                    onSearch={handleSearch}
+                    placeholder="Buscar restaurantes..."
+                  />
+                  <Button
+                    variant="ghost"
+                    onClick={() => setShowMobileSearch(false)}
+                    className="p-2 hover:bg-gray-100"
+                  >
+                    <X className="w-5 h-5 text-gray-600" />
+                  </Button>
+                </div>
               </div>
             )}
           </div>

@@ -1,15 +1,22 @@
 import { getAuthToken } from './session';
 
-// Configuração da URL da API - usar localhost para desenvolvimento
+// Configuração da URL da API - detectar automaticamente o IP correto
 const getApiBaseUrl = () => {
   // Se VITE_API_URL estiver definido, usar ele
   if (import.meta.env.VITE_API_URL) {
     return import.meta.env.VITE_API_URL;
   }
   
-  // Para desenvolvimento local, usar localhost
-  // Isso evita problemas de CORS
-  return 'http://localhost:4000/api';
+  // Detectar o IP correto baseado no hostname atual
+  const currentHostname = window.location.hostname;
+  
+  if (currentHostname === 'localhost' || currentHostname === '127.0.0.1') {
+    // Se estiver rodando em localhost, usar localhost
+    return 'http://localhost:4000/api';
+  } else {
+    // Se estiver rodando em IP da rede, usar o mesmo IP
+    return `http://${currentHostname}:4000/api`;
+  }
 };
 
 const API_BASE_URL = getApiBaseUrl();

@@ -11,6 +11,153 @@ import { Plus, Trash2, X } from 'lucide-react';
 
 const categories = ["entrada", "prato_principal", "sobremesa", "bebida", "lanche", "acompanhamento"];
 
+const PersonalizationGroupsFieldArray = ({ title, fields, setFields }) => {
+  const addGroup = () => {
+    const newGroup = { 
+      nome_grupo: '', 
+      obrigatorio: true, 
+      minimo_opcoes: 0,
+      maximo_opcoes: 0,
+      opcoes: [] 
+    };
+    setFields([...fields, newGroup]);
+  };
+
+  const removeGroup = (groupIndex) => {
+    setFields(fields.filter((_, i) => i !== groupIndex));
+  };
+
+  const updateGroup = (groupIndex, field, value) => {
+    const newGroups = [...fields];
+    newGroups[groupIndex][field] = value;
+    setFields(newGroups);
+  };
+
+  const addOption = (groupIndex) => {
+    const newGroups = [...fields];
+    if (!newGroups[groupIndex].opcoes) {
+      newGroups[groupIndex].opcoes = [];
+    }
+    newGroups[groupIndex].opcoes.push({ nome: '', preco_adicional: 0 });
+    setFields(newGroups);
+  };
+
+  const removeOption = (groupIndex, optionIndex) => {
+    const newGroups = [...fields];
+    newGroups[groupIndex].opcoes.splice(optionIndex, 1);
+    setFields(newGroups);
+  };
+
+  const updateOption = (groupIndex, optionIndex, field, value) => {
+    const newGroups = [...fields];
+    newGroups[groupIndex].opcoes[optionIndex][field] = value;
+    setFields(newGroups);
+  };
+
+  return (
+    <div className="space-y-4 p-4 border rounded-lg">
+      <h4 className="font-medium">{title}</h4>
+      {fields.map((group, groupIndex) => (
+        <div key={groupIndex} className="p-3 border rounded-md space-y-3">
+          <div className="flex justify-between items-center">
+            <h5 className="font-semibold">Grupo {groupIndex + 1}</h5>
+            <Button variant="ghost" size="icon" onClick={() => removeGroup(groupIndex)}>
+              <Trash2 className="w-4 h-4 text-red-500" />
+            </Button>
+          </div>
+          
+          {/* Nome do Grupo e Seleção Obrigatória */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Nome do Grupo (ex: Escolha a Carne)</Label>
+              <Input 
+                value={group.nome_grupo || ''} 
+                onChange={(e) => updateGroup(groupIndex, 'nome_grupo', e.target.value)}
+              />
+            </div>
+            <div className="flex items-end">
+              <div className="flex items-center gap-2 p-2 border rounded-md h-10">
+                <Checkbox 
+                  id={`obrigatorio-${groupIndex}`}
+                  checked={group.obrigatorio}
+                  onCheckedChange={(checked) => updateGroup(groupIndex, 'obrigatorio', checked)}
+                />
+                <Label htmlFor={`obrigatorio-${groupIndex}`}>Seleção Obrigatória</Label>
+              </div>
+            </div>
+          </div>
+
+          {/* Mínimo e Máximo de Opções */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Mínimo de opções a escolher</Label>
+              <Input 
+                type="number"
+                min="0"
+                max={group.opcoes ? group.opcoes.length : 0}
+                value={group.minimo_opcoes || 0} 
+                onChange={(e) => updateGroup(groupIndex, 'minimo_opcoes', parseInt(e.target.value) || 0)}
+                placeholder="0"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Número mínimo de opções que o cliente deve escolher (0 = opcional)
+              </p>
+            </div>
+            <div>
+              <Label>Máximo de opções a escolher</Label>
+              <Input 
+                type="number"
+                min="0"
+                max={group.opcoes ? group.opcoes.length : 0}
+                value={group.maximo_opcoes || 0} 
+                onChange={(e) => updateGroup(groupIndex, 'maximo_opcoes', parseInt(e.target.value) || 0)}
+                placeholder="0 = sem limite"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Número máximo de opções (0 = sem limite)
+              </p>
+            </div>
+          </div>
+
+          {/* Opções do Grupo */}
+          <div>
+            <Label>Opções do Grupo</Label>
+            {(group.opcoes || []).map((opcao, opcaoIndex) => (
+              <div key={opcaoIndex} className="flex items-end gap-2 mt-2">
+                <div className="flex-1">
+                  <Label className="text-xs">Nome da Opção</Label>
+                  <Input 
+                    value={opcao.nome || ''}
+                    onChange={(e) => updateOption(groupIndex, opcaoIndex, 'nome', e.target.value)}
+                  />
+                </div>
+                <div className="w-32">
+                  <Label className="text-xs">Preço Adicional (€)</Label>
+                  <Input 
+                    type="number" 
+                    step="0.01"
+                    value={opcao.preco_adicional || 0}
+                    onChange={(e) => updateOption(groupIndex, opcaoIndex, 'preco_adicional', parseFloat(e.target.value))}
+                  />
+                </div>
+                <Button variant="ghost" size="icon" onClick={() => removeOption(groupIndex, opcaoIndex)}>
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+            ))}
+            <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => addOption(groupIndex)}>
+              <Plus className="w-4 h-4 mr-2" /> Adicionar Opção
+            </Button>
+          </div>
+        </div>
+      ))}
+      <Button type="button" variant="outline" onClick={addGroup}>
+        <Plus className="w-4 h-4 mr-2" /> Adicionar Grupo de Opções
+      </Button>
+    </div>
+  );
+};
+
 const DynamicFieldArray = ({ title, fields, setFields, fieldConfig }) => {
   const addField = () => {
     const newField = fieldConfig.reduce((acc, curr) => ({ ...acc, [curr.name]: curr.default }), {});
@@ -192,105 +339,11 @@ export default function MenuItemForm({ item, onSubmit, onCancel }) {
       />
 
       {/* Grupos de Personalização */}
-      <div className="space-y-4 p-4 border rounded-lg">
-        <h4 className="font-medium">Grupos de Opções de Personalização</h4>
-        {(formData.opcoes_personalizacao || []).map((group, groupIndex) => (
-          <div key={groupIndex} className="p-3 border rounded-md space-y-3">
-            <div className="flex justify-between items-center">
-              <h5 className="font-semibold">Grupo {groupIndex + 1}</h5>
-              <Button variant="ghost" size="icon" onClick={() => {
-                const newGroups = [...formData.opcoes_personalizacao];
-                newGroups.splice(groupIndex, 1);
-                setFormData({...formData, opcoes_personalizacao: newGroups});
-              }}>
-                <Trash2 className="w-4 h-4 text-red-500" />
-              </Button>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-               <div>
-                  <Label>Nome do Grupo (ex: Escolha a Carne)</Label>
-                  <Input 
-                    value={group.nome_grupo || ''} 
-                    onChange={(e) => {
-                      const newGroups = [...formData.opcoes_personalizacao];
-                      newGroups[groupIndex].nome_grupo = e.target.value;
-                      setFormData({...formData, opcoes_personalizacao: newGroups});
-                    }}
-                  />
-                </div>
-                <div className="flex items-end">
-                    <div className="flex items-center gap-2 p-2 border rounded-md h-10">
-                        <Checkbox 
-                            id={`obrigatorio-${groupIndex}`}
-                            checked={group.obrigatorio}
-                            onCheckedChange={(checked) => {
-                                const newGroups = [...formData.opcoes_personalizacao];
-                                newGroups[groupIndex].obrigatorio = checked;
-                                setFormData({...formData, opcoes_personalizacao: newGroups});
-                            }}
-                        />
-                        <Label htmlFor={`obrigatorio-${groupIndex}`}>Seleção Obrigatória</Label>
-                    </div>
-                </div>
-            </div>
-
-            <div>
-              <Label>Opções do Grupo</Label>
-              {(group.opcoes || []).map((opcao, opcaoIndex) => (
-                <div key={opcaoIndex} className="flex items-end gap-2 mt-2">
-                  <div className="flex-1">
-                    <Label className="text-xs">Nome da Opção</Label>
-                    <Input 
-                      value={opcao.nome || ''}
-                      onChange={(e) => {
-                        const newGroups = [...formData.opcoes_personalizacao];
-                        newGroups[groupIndex].opcoes[opcaoIndex].nome = e.target.value;
-                        setFormData({...formData, opcoes_personalizacao: newGroups});
-                      }}
-                    />
-                  </div>
-                  <div className="w-32">
-                    <Label className="text-xs">Preço Adicional (€)</Label>
-                    <Input 
-                      type="number" 
-                      step="0.01"
-                      value={opcao.preco_adicional || 0}
-                      onChange={(e) => {
-                        const newGroups = [...formData.opcoes_personalizacao];
-                        newGroups[groupIndex].opcoes[opcaoIndex].preco_adicional = parseFloat(e.target.value);
-                        setFormData({...formData, opcoes_personalizacao: newGroups});
-                      }}
-                    />
-                  </div>
-                  <Button variant="ghost" size="icon" onClick={() => {
-                     const newGroups = [...formData.opcoes_personalizacao];
-                     newGroups[groupIndex].opcoes.splice(opcaoIndex, 1);
-                     setFormData({...formData, opcoes_personalizacao: newGroups});
-                  }}>
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              ))}
-              <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => {
-                const newGroups = [...formData.opcoes_personalizacao];
-                if (!newGroups[groupIndex].opcoes) newGroups[groupIndex].opcoes = [];
-                newGroups[groupIndex].opcoes.push({ nome: '', preco_adicional: 0 });
-                setFormData({...formData, opcoes_personalizacao: newGroups});
-              }}>
-                <Plus className="w-4 h-4 mr-2" /> Adicionar Opção
-              </Button>
-            </div>
-          </div>
-        ))}
-        <Button type="button" variant="outline" onClick={() => {
-          const newGroups = [...(formData.opcoes_personalizacao || [])];
-          newGroups.push({ nome_grupo: '', obrigatorio: true, opcoes: [] });
-          setFormData({...formData, opcoes_personalizacao: newGroups});
-        }}>
-          <Plus className="w-4 h-4 mr-2" /> Adicionar Grupo de Opções
-        </Button>
-      </div>
+      <PersonalizationGroupsFieldArray
+        title="Grupos de Opções de Personalização"
+        fields={formData.opcoes_personalizacao || []}
+        setFields={(newFields) => setFormData({...formData, opcoes_personalizacao: newFields})}
+      />
 
       {/* Alergenos */}
       <DynamicFieldArray

@@ -187,6 +187,65 @@ router.get('/restaurants/:id', async (req, res, next) => {
   }
 });
 
+// Endpoint pÃºblico para obter menu de um restaurante
+router.get('/restaurants/:id/menu', async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { category, search } = req.query;
+    
+    const filters: Record<string, unknown> = {
+      restaurantId: id,
+      disponivel: true // Apenas itens disponÃ­veis
+    };
+
+    if (category) {
+      filters.categoria = String(category).toLowerCase();
+    }
+
+    const where = {
+      ...filters,
+      ...(search
+        ? {
+            OR: [
+              { nome: { contains: String(search), mode: Prisma.QueryMode.insensitive } },
+              { descricao: { contains: String(search), mode: Prisma.QueryMode.insensitive } },
+              { categoria: { contains: String(search), mode: Prisma.QueryMode.insensitive } },
+            ],
+          }
+        : {}),
+    };
+
+    const menuItems = await prisma.menuItem.findMany({
+      where,
+      orderBy: [{ categoria: 'asc' }, { nome: 'asc' }],
+      select: {
+        id: true,
+        createdDate: true,
+        updatedDate: true,
+        createdBy: true,
+        nome: true,
+        descricao: true,
+        categoria: true,
+        preco: true,
+        disponivel: true,
+        ingredientes: true,
+        alergenos: true,
+        adicionais: true,
+        opcoes_personalizacao: true,
+        imagemUrl: true,
+        restaurantId: true,
+        calorias: true,
+        tempoPreparo: true,
+        ordem: true
+      }
+    });
+
+    res.json(serialize(menuItems));
+  } catch (error) {
+    next(error);
+  }
+});
+
 // Endpoint pÃºblico para listar itens do cardÃ¡pio
 router.get('/menu-items', async (req, res, next) => {
   try {

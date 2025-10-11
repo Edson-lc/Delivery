@@ -11,7 +11,7 @@ const redirect = (page) => {
 const resolveLandingPage = (user) => {
   if (!user) return "Home";
   if (user.role === "admin") return "Dashboard";
-  if (user.tipo_usuario === "restaurante" && user.restaurant_id) return "RestaurantDashboard";
+  if (user.tipo_usuario === "restaurante" && user.restaurant_id) return "restaurantedashboard";
   if (user?.tipo_usuario === "entregador") return "PainelEntregador";
   if (user.tipo_usuario === "cliente") return "MinhaConta";
   return "Home";
@@ -72,7 +72,7 @@ export function useCurrentUser(currentPageName) {
           user.restaurant_id &&
           currentPageName === "Home"
         ) {
-          redirect("RestaurantDashboard");
+          redirect("restaurantedashboard");
           return;
         }
 

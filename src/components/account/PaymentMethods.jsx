@@ -174,20 +174,20 @@ export default function PaymentMethods({ user, onUserUpdate }) {
     };
 
     const handleSave = (methodData) => {
-        const currentMethods = user.metodos_pagamento_salvos || user.metodos_pagamento || [];
+        const currentMethods = user?.metodos_pagamento_salvos || user?.metodos_pagamento || [];
         const newMethod = { ...methodData, id: `pay_${Date.now()}` };
         saveMethods([...currentMethods, newMethod]);
     };
 
     const handleDelete = (methodId) => {
-        const method = (user.metodos_pagamento_salvos || user.metodos_pagamento || []).find(m => m.id === methodId);
+        const method = (user?.metodos_pagamento_salvos || user?.metodos_pagamento || []).find(m => m.id === methodId);
         setCardToDelete(method);
         setIsDeleteDialogOpen(true);
     };
 
     const confirmDelete = () => {
         if (cardToDelete) {
-            const updatedMethods = (user.metodos_pagamento_salvos || user.metodos_pagamento || []).filter(m => m.id !== cardToDelete.id);
+            const updatedMethods = (user?.metodos_pagamento_salvos || user?.metodos_pagamento || []).filter(m => m.id !== cardToDelete.id);
             saveMethods(updatedMethods);
         }
         setIsDeleteDialogOpen(false);
@@ -235,8 +235,8 @@ export default function PaymentMethods({ user, onUserUpdate }) {
                 
                 {isSaving && <div className="flex justify-center py-4"><Loader2 className="animate-spin" /></div>}
                 <div className="space-y-4">
-                    {(user.metodos_pagamento_salvos || user.metodos_pagamento || []).length > 0 ? (
-                        user.metodos_pagamento_salvos || user.metodos_pagamento.map(method => (
+                    {(user?.metodos_pagamento_salvos || user?.metodos_pagamento || []).length > 0 ? (
+                        (user?.metodos_pagamento_salvos || user?.metodos_pagamento || []).map(method => (
                             <div key={method.id} className="p-4 border rounded-lg flex justify-between items-center bg-gradient-to-r from-gray-50 to-white">
                                 <div className="flex items-center gap-4">
                                     <CardBrandIcon brand={method.bandeira} className="w-12 h-8" />

@@ -6,12 +6,9 @@ import {
   Star, 
   MapPin, 
   Phone, 
-  Clock, 
   Edit,
   Eye,
-  MoreHorizontal,
-  Bike,
-  Timer
+  MoreHorizontal
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -122,39 +119,6 @@ export default function RestaurantCard({ restaurant, onEdit, onViewDetails }) {
           )}
         </div>
 
-        {/* Informações operacionais destacadas */}
-        <div className="bg-gray-50 rounded-lg p-3 space-y-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1 text-gray-700">
-                <Timer className="w-4 h-4 text-blue-500" />
-                <span className="text-sm font-medium">{restaurant.tempoPreparo || restaurant.tempo_preparo || 30} min</span>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1 text-gray-700">
-                <Star className="w-4 h-4 text-yellow-500" />
-                <span className="text-sm font-medium">{restaurant.rating || restaurant.avaliacao || 0}</span>
-              </div>
-            </div>
-          </div>
-          
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1 text-gray-700">
-              <Bike className="w-4 h-4 text-green-500" />
-              <span className="text-sm font-medium">Taxa: €{restaurant.taxaEntrega || restaurant.taxa_entrega || 0}</span>
-            </div>
-            
-            {restaurant.valorMinimo && (
-              <div className="flex items-center gap-1 text-gray-700">
-                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-medium">
-                  Min: €{restaurant.valorMinimo}
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
 
         {/* Descrição */}
         {restaurant.descricao && (

@@ -166,17 +166,14 @@ export default function HomePage() {
       {/* Main Content - Otimizado para mobile */}
       <main className="max-w-screen-xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
         {/* Mobile Filter Button - Apenas para ordenação */}
-        <div className="lg:hidden mb-6">
+        <div className="lg:hidden mb-6 flex justify-end">
           <Button
             variant="outline"
             onClick={() => setShowMobileFilters(!showMobileFilters)}
-            className="w-full justify-between"
+            className="flex items-center gap-2"
           >
-            <div className="flex items-center gap-2">
-              <Filter className="w-4 h-4" />
-              Ordenação
-            </div>
-            {showMobileFilters ? <X className="w-4 h-4" /> : <Filter className="w-4 h-4" />}
+            <Filter className="w-4 h-4" />
+            Ordenar
           </Button>
         </div>
 

@@ -79,10 +79,14 @@ export default function MinhaContaPage() {
             {/* Header */}
             <header className="bg-white shadow-sm">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-                    <a href={createPageUrl("Home")} className="text-xl font-bold text-orange-600">AmaEats</a>
+                    <a href={createPageUrl("Home")} className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
+                            <span className="text-white text-lg font-bold">♥</span>
+                        </div>
+                        <span className="text-xl font-bold text-gray-900">AmaEats</span>
+                    </a>
                     <div className="flex items-center gap-4">
-                        <span className="text-sm font-medium">Olá, {user.nome || user.full_name.split(' ')[0]}</span>
-                        <Button variant="outline" size="sm" onClick={handleLogout}><LogOut className="w-4 h-4 mr-2"/>Sair</Button>
+                        <span className="text-sm font-medium">Olá, {user?.nome || user?.full_name?.split(' ')[0] || 'Usuário'}</span>
                     </div>
                 </div>
             </header>
@@ -95,7 +99,7 @@ export default function MinhaContaPage() {
                             <Card className="p-4 border-none shadow-lg bg-white/80 backdrop-blur-sm">
                                 <div className="flex flex-col items-center text-center gap-4 mb-6">
                                     <div className="relative group">
-                                        <img src={user.foto_url || defaultAvatar} alt="Avatar" className="w-24 h-24 rounded-full border-2 border-orange-200" />
+                                        <img src={user?.foto_url || defaultAvatar} alt="Avatar" className="w-24 h-24 rounded-full border-2 border-orange-200" />
                                         <button 
                                             onClick={handleImageClick}
                                             className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 flex items-center justify-center rounded-full transition-opacity cursor-pointer"
@@ -116,7 +120,7 @@ export default function MinhaContaPage() {
                                     </div>
                                     <div>
                                         <h2 className="font-bold text-lg">{userFullName}</h2>
-                                        <p className="text-sm text-gray-500 truncate">{user.email}</p>
+                                        <p className="text-sm text-gray-500 truncate">{user?.email || 'Email não disponível'}</p>
                                     </div>
                                 </div>
                                 
@@ -138,6 +142,19 @@ export default function MinhaContaPage() {
                                         Pagamento
                                     </TabsTrigger>
                                 </TabsList>
+                                
+                                {/* Separador */}
+                                <div className="border-t border-gray-200 my-4"></div>
+                                
+                                {/* Botão Terminar Sessão */}
+                                <Button 
+                                    variant="ghost" 
+                                    onClick={handleLogout}
+                                    className="w-full justify-start gap-3 text-base py-3 px-4 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                >
+                                    <LogOut className="w-5 h-5" />
+                                    Terminar Sessão
+                                </Button>
                             </Card>
                         </div>
 
@@ -147,7 +164,7 @@ export default function MinhaContaPage() {
                                 <ProfileForm user={user} onUserUpdate={handleUserUpdate} />
                             </TabsContent>
                              <TabsContent value="pedidos" className="mt-0">
-                                <OrderHistory userEmail={user.email} />
+                                <OrderHistory userEmail={user?.email} />
                             </TabsContent>
                             <TabsContent value="enderecos" className="mt-0">
                                 <AddressManager user={user} onUserUpdate={handleUserUpdate} />

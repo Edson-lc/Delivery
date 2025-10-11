@@ -28,6 +28,128 @@ function normalizeCurrency(value: unknown): number {
   return Math.round(sanitized * 100) / 100;
 }
 
+function calculateOrderDelay(order: any): number | null {
+  if (!order) return null;
+  
+  // Só calcular atraso para pedidos confirmados
+  const confirmationDate = order.dataConfirmacao;
+  const preparationTime = order.tempoPreparo || 30;
+  
+  if (!confirmationDate) {
+    console.log("⚠️ calculateOrderDelay: Pedido não confirmado", { 
+      order: order?.id,
+      dataConfirmacao: confirmationDate,
+      status: order?.status
+    });
+    return null;
+  }
+  
+  const orderDate = new Date(confirmationDate);
+  const now = new Date();
+  
+  // Calcular quando o pedido deveria estar pronto
+  const expectedReadyTime = new Date(orderDate.getTime() + (preparationTime * 60 * 1000));
+  
+  // Calcular diferença em minutos
+  const diffInMinutes = Math.floor((now - expectedReadyTime) / (1000 * 60));
+  
+  console.log("🔍 calculateOrderDelay:", {
+    orderId: order.id,
+    preparationTime,
+    startDate: orderDate.toISOString(),
+    dateSource: 'confirmação',
+    expectedReadyTime: expectedReadyTime.toISOString(),
+    now: now.toISOString(),
+    diffInMinutes
+  });
+  
+  // Retornar apenas se houver atraso (valor positivo)
+  return diffInMinutes > 0 ? diffInMinutes : null;
+}
+
+function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371; // Raio da Terra em quilômetros
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  const distance = R * c;
+  return distance;
+}
+
+async function findNearestAvailableDelivery(restaurantId: string): Promise<string | null> {
+  try {
+    // Buscar dados do restaurante
+    const restaurant = await prisma.restaurant.findUnique({
+      where: { id: restaurantId },
+      select: { latitude: true, longitude: true }
+    });
+
+    if (!restaurant || !restaurant.latitude || !restaurant.longitude) {
+      console.log("⚠️ Restaurante sem coordenadas:", restaurantId);
+      return null;
+    }
+
+    // Buscar entregadores ativos, disponíveis e com coordenadas
+    const availableDeliveries = await prisma.entregador.findMany({
+      where: {
+        status: 'ativo',
+        disponivel: true,
+        latitude: { not: null },
+        longitude: { not: null }
+      },
+      select: {
+        id: true,
+        nomeCompleto: true,
+        latitude: true,
+        longitude: true,
+        avaliacao: true,
+        totalEntregas: true
+      }
+    });
+
+    if (availableDeliveries.length === 0) {
+      console.log("⚠️ Nenhum entregador disponível encontrado");
+      return null;
+    }
+
+    // Calcular distâncias e encontrar o mais próximo
+    let nearestDelivery = null;
+    let minDistance = Infinity;
+
+    for (const delivery of availableDeliveries) {
+      if (delivery.latitude && delivery.longitude) {
+        const distance = calculateDistance(
+          restaurant.latitude,
+          restaurant.longitude,
+          delivery.latitude,
+          delivery.longitude
+        );
+
+        console.log(`🔍 Entregador ${delivery.id} (${delivery.nomeCompleto}): ${distance.toFixed(2)}km`);
+
+        if (distance < minDistance) {
+          minDistance = distance;
+          nearestDelivery = delivery;
+        }
+      }
+    }
+
+    if (nearestDelivery) {
+      console.log(`✅ Entregador mais próximo encontrado: ${nearestDelivery.id} (${nearestDelivery.nomeCompleto}) - ${minDistance.toFixed(2)}km`);
+      return nearestDelivery.id;
+    }
+
+    return null;
+  } catch (error) {
+    console.error("❌ Erro ao buscar entregador mais próximo:", error);
+    return null;
+  }
+}
+
 function calculateOrderSubtotal(items: unknown): number {
   console.log("=== DEBUG calculateOrderSubtotal ===");
   console.log("Items recebidos:", items);
@@ -317,6 +439,11 @@ router.get('/', async (req, res, next) => {
           nomeTitular: true,
           observacoes: true,
           dataEntrega: true,
+          dataConfirmacao: true,
+          tempoPreparo: true,
+          tempoPreparoAlterado: true,
+          tempoAdicional: true,
+          tempoAtraso: true,
           restaurantId: true,
           restaurant: {
             select: {
@@ -326,6 +453,21 @@ router.get('/', async (req, res, next) => {
               endereco: true,
               cidade: true,
               codigoPostal: true,
+              latitude: true,
+              longitude: true,
+              imagemUrl: true,
+            }
+          },
+          entregador: {
+            select: {
+              id: true,
+              nomeCompleto: true,
+              fotoUrl: true,
+              telefone: true,
+              avaliacao: true,
+              totalEntregas: true,
+              latitude: true,
+              longitude: true
             }
           }
         },
@@ -381,6 +523,11 @@ router.get('/:id', async (req, res, next) => {
         nomeTitular: true,
         observacoes: true,
         dataEntrega: true,
+        dataConfirmacao: true,
+        tempoPreparo: true,
+        tempoPreparoAlterado: true,
+        tempoAdicional: true,
+        tempoAtraso: true,
         restaurantId: true,
         restaurant: {
           select: {
@@ -390,6 +537,9 @@ router.get('/:id', async (req, res, next) => {
             endereco: true,
             cidade: true,
             codigoPostal: true,
+            latitude: true,
+            longitude: true,
+            imagemUrl: true,
           }
         },
         customer: {
@@ -403,9 +553,14 @@ router.get('/:id', async (req, res, next) => {
         entregador: {
           select: {
             id: true,
-            nome: true,
+            nomeCompleto: true,
+            fotoUrl: true,
             telefone: true,
             email: true,
+            avaliacao: true,
+            totalEntregas: true,
+            latitude: true,
+            longitude: true
           }
         },
         delivery: {
@@ -560,14 +715,84 @@ router.put('/:id', async (req, res, next) => {
     // Se apenas o status está sendo atualizado, não recalcular itens
     const isOnlyStatusUpdate = Object.keys(data).length === 1 && data.status !== undefined;
 
-    if (isOnlyStatusUpdate) {
-      console.log("🔄 Atualizando apenas status do pedido:", id, "para:", data.status);
+    // Se apenas o tempo de preparo está sendo atualizado, não recalcular itens
+    const isOnlyPreparationTimeUpdate = Object.keys(data).length === 1 && data.tempoPreparo !== undefined;
+
+    // Se apenas campos específicos estão sendo atualizados, não recalcular itens
+    const hasTempoAdicional = data.tempoAdicional !== undefined || data.tempo_adicional !== undefined;
+    const isSimpleUpdate = isOnlyStatusUpdate || isOnlyPreparationTimeUpdate || 
+      (Object.keys(data).length === 2 && data.tempoPreparo !== undefined && data.tempoPreparoAlterado !== undefined) ||
+      (Object.keys(data).length === 3 && data.tempoPreparo !== undefined && data.tempoPreparoAlterado !== undefined && hasTempoAdicional);
+
+    if (isSimpleUpdate) {
+      console.log("🔄 Atualização simples do pedido:", id, "dados:", data);
+      
+      // Definir dados de atualização
+      let updateData = { ...data };
+      
+      // Validação adicional: verificar se tempo de preparo já foi alterado
+      if (data.tempoPreparo !== undefined) {
+        const existingOrder = await prisma.order.findUnique({
+          where: { id },
+          select: { 
+            tempoPreparoAlterado: true,
+            tempoPreparo: true,
+            restaurantId: true
+          }
+        });
+        
+        if (existingOrder?.tempoPreparoAlterado) {
+          return res.status(400).json({
+            error: {
+              code: 'PREPARATION_TIME_ALREADY_CHANGED',
+              message: 'O tempo de preparo deste pedido já foi alterado anteriormente. Apenas uma alteração é permitida por pedido.'
+            }
+          });
+        }
+        
+        // Tempo adicional já calculado no frontend
+        const tempoAdicional = data.tempoAdicional ?? data.tempo_adicional;
+        if (tempoAdicional !== undefined) {
+          updateData.tempoAdicional = tempoAdicional;
+          console.log(`🕐 Tempo adicional recebido do frontend para pedido ${id}:`, tempoAdicional);
+        }
+      }
+      
+      // Definir data de confirmação quando pedido for aceito
+      if (data.status === 'confirmado') {
+        updateData.dataConfirmacao = new Date();
+        console.log(`✅ Data de confirmação definida para pedido ${id}: ${new Date().toISOString()}`);
+      }
+      
+      // Calcular tempo de atraso e atribuir entregador se o status for alterado para "pronto"
+      if (data.status === 'pronto') {
+        const existingOrder = await prisma.order.findUnique({
+          where: { id },
+          select: { createdDate: true, dataConfirmacao: true, tempoPreparo: true, restaurantId: true }
+        });
+        
+        if (existingOrder) {
+          // Calcular tempo de atraso
+          const delay = calculateOrderDelay(existingOrder);
+          if (delay !== null) {
+            updateData.tempoAtraso = delay;
+            console.log(`⏰ Tempo de atraso calculado para pedido ${id}: ${delay} minutos`);
+          }
+
+          // Atribuir entregador mais próximo
+          const nearestDeliveryId = await findNearestAvailableDelivery(existingOrder.restaurantId);
+          if (nearestDeliveryId) {
+            updateData.entregadorId = nearestDeliveryId;
+            console.log(`🚚 Entregador atribuído automaticamente ao pedido ${id}: ${nearestDeliveryId}`);
+          } else {
+            console.log(`⚠️ Nenhum entregador disponível encontrado para o pedido ${id}`);
+          }
+        }
+      }
       
       const order = await prisma.order.update({
         where: { id },
-        data: {
-          status: data.status,
-        },
+        data: updateData,
       });
 
       res.json(serialize(order));
