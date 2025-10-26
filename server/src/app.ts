@@ -57,11 +57,16 @@ if (!env.IS_PRODUCTION) {
   });
 }
 
-// CORS seguro e restritivo
+// CORS otimizado para dispositivos móveis
 const corsOptions = {
   origin: (origin: string | undefined, callback: Function) => {
     // Permitir requisições sem origin (mobile apps, Postman, etc.)
-    if (!origin) return callback(null, true);
+    if (!origin) {
+      console.log('🌐 CORS: Permitindo requisição sem origin (mobile/app)');
+      return callback(null, true);
+    }
+    
+    console.log('🌐 CORS: Verificando origem:', origin);
     
     if (env.IS_PRODUCTION) {
       // Em produção, validar origem específica
@@ -72,8 +77,10 @@ const corsOptions = {
       }
       
       if (allowedOrigins.includes(origin)) {
+        console.log('✅ CORS: Origem permitida em produção:', origin);
         return callback(null, true);
       } else {
+        console.log('❌ CORS: Origem não permitida em produção:', origin);
         return callback(new Error('Origem não permitida pelo CORS'), false);
       }
     } else {
@@ -87,7 +94,7 @@ const corsOptions = {
         'http://localhost:5177',
         'http://localhost:5178',
         'http://localhost:5179',
-        // IPs da rede local
+        // IPs da rede local (192.168.1.x)
         'http://192.168.1.229:5173',
         'http://192.168.1.229:5174',
         'http://192.168.1.229:5175',
@@ -97,6 +104,10 @@ const corsOptions = {
         'http://192.168.1.229:5179',
         'http://192.168.1.229:5180',
         'http://192.168.1.229:5181',
+        // Permitir qualquer IP da rede 192.168.1.x para mobile
+        ...Array.from({length: 254}, (_, i) => `http://192.168.1.${i+1}:5173`),
+        ...Array.from({length: 254}, (_, i) => `http://192.168.1.${i+1}:5174`),
+        ...Array.from({length: 254}, (_, i) => `http://192.168.1.${i+1}:5175`),
         // IP Docker/VM
         'http://82.155.88.172:5173',
         'http://82.155.88.172:5174',
@@ -106,41 +117,20 @@ const corsOptions = {
         'http://82.155.88.172:5178',
         'http://82.155.88.172:5179',
         'http://82.155.88.172:5180',
-        'http://82.155.88.172:5181',
-        // DDNS - ama.ddns.net
-        'http://ama.ddns.net',
-        'https://ama.ddns.net',
-        'http://ama.ddns.net:80',
-        'https://ama.ddns.net:443',
-        'http://ama.ddns.net:5173',
-        'https://ama.ddns.net:5173',
-        'http://ama.ddns.net:5174',
-        'https://ama.ddns.net:5174',
-        'http://ama.ddns.net:5175',
-        'https://ama.ddns.net:5175',
-        'http://ama.ddns.net:5176',
-        'https://ama.ddns.net:5176',
-        'http://ama.ddns.net:5177',
-        'https://ama.ddns.net:5177',
-        'http://ama.ddns.net:5178',
-        'https://ama.ddns.net:5178',
-        'http://ama.ddns.net:5179',
-        'https://ama.ddns.net:5179',
-        'http://ama.ddns.net:5180',
-        'https://ama.ddns.net:5180',
-        'http://ama.ddns.net:5181',
-        'https://ama.ddns.net:5181',
-        'http://ama.ddns.net:3000',
-        'https://ama.ddns.net:3000',
-        'http://ama.ddns.net:4000',
-        'https://ama.ddns.net:4000',
-        'http://ama.ddns.net:8080',
-        'https://ama.ddns.net:8080',
-        'http://ama.ddns.net:8081',
-        'https://ama.ddns.net:8081'
+        'http://82.155.88.172:5181',        
       ];
-      if (allowedDevOrigins.includes(origin)) {
+      
+      // Verificar se a origem está na lista ou se é um IP da rede local
+      const isAllowed = allowedDevOrigins.includes(origin) || 
+                       /^http:\/\/192\.168\.1\.\d{1,3}:\d+$/.test(origin) ||
+                       /^http:\/\/10\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d+$/.test(origin) ||
+                       /^http:\/\/172\.(1[6-9]|2[0-9]|3[0-1])\.\d{1,3}\.\d{1,3}:\d+$/.test(origin);
+      
+      if (isAllowed) {
+        console.log('✅ CORS: Origem permitida em desenvolvimento:', origin);
         return callback(null, true);
+      } else {
+        console.log('❌ CORS: Origem não permitida em desenvolvimento:', origin);
       }
     }
     
@@ -188,6 +178,9 @@ app.use((req, res, next) => {
   
   next();
 });
+
+// Middleware para webhook do Stripe (raw body)
+app.use('/api/payments/webhook', express.raw({ type: 'application/json' }));
 
 // Parser de JSON com limite
 app.use(express.json({ 

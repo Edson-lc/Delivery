@@ -28,9 +28,11 @@ model User {
   consentimentoDados Boolean        @default(false) @map("consentimento_dados")
   enderecosSalvos    Json           @default("[]") @map("enderecos_salvos")
   metodosPagamento   Json           @default("[]") @map("metodos_pagamento_salvos")
+  stripeCustomerId   String?        @map("stripe_customer_id")
   entregador         Entregador?
   refreshTokens      RefreshToken[]
   restaurant         Restaurant?    @relation(fields: [restaurantId], references: [id])
+  enderecos          Endereco[]
 
   @@map("users")
 }
@@ -114,6 +116,7 @@ model Order {
   bandeiraCartao  String?    @map("bandeira_cartao")
   finalCartao     String?    @map("final_cartao")
   nomeTitular     String?    @map("nome_titular")
+  stripePaymentIntentId String? @map("stripe_payment_intent_id")
   observacoes     String?
   dataEntrega     DateTime?  @map("data_entrega")
   dataConfirmacao DateTime?  @map("data_confirmacao")
@@ -194,4 +197,23 @@ model RefreshToken {
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("refresh_tokens")
+}
+
+model Endereco {
+  id          String   @id @default(uuid())
+  createdDate DateTime @default(now()) @map("created_date")
+  updatedDate DateTime @default(now()) @map("updated_date")
+  userId      String   @map("user_id")
+  nome        String
+  rua         String
+  numero      String
+  complemento String?
+  bairro      String
+  cidade      String
+  cep         String
+  latitude    Float?
+  longitude   Float?
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("enderecos")
 }

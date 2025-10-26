@@ -20,8 +20,8 @@ export const authLimiter = rateLimit({
 
 // Rate limiting geral
 export const generalLimiter = rateLimit({
-  windowMs: env.RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000, // 15 minutos
-  max: env.RATE_LIMIT_MAX_REQUESTS || (env.IS_PRODUCTION ? 1000 : 10000), // Mais permissivo em desenvolvimento
+  windowMs: env.RATE_LIMIT_WINDOW_MS || (env.IS_PRODUCTION ? 15 * 60 * 1000 : 60 * 1000), // 1 minuto em desenvolvimento, 15 minutos em produção
+  max: env.RATE_LIMIT_MAX_REQUESTS || (env.IS_PRODUCTION ? 1000 : 100000), // Muito mais permissivo em desenvolvimento
   message: {
     error: {
       code: 'TOO_MANY_REQUESTS',
@@ -30,11 +30,7 @@ export const generalLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  skipSuccessfulRequests: false, // Contar todos os requests
-  keyGenerator: (req) => {
-    // Usar IP + User-Agent para evitar conflitos entre diferentes clientes
-    return `${req.ip}-${req.get('User-Agent') || 'unknown'}`;
-  }
+  skipSuccessfulRequests: false // Contar todos os requests
 });
 
 // Rate limiting para criação de recursos
@@ -59,7 +55,12 @@ export const helmetConfig = helmet({
       styleSrc: ["'self'", "'unsafe-inline'"],
       scriptSrc: ["'self'"],
       imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'"],
+      connectSrc: [
+        "'self'", 
+        "http://localhost:*", 
+        "http://192.168.1.*:*",
+        "http://127.0.0.1:*"
+      ],
       fontSrc: ["'self'"],
       objectSrc: ["'none'"],
       mediaSrc: ["'self'"],

@@ -230,6 +230,10 @@ router.put('/:id', ensureSelfOrAdmin, async (req, res, next) => {
       metodos_pagamento_salvos?: unknown;
     }) | Record<string, unknown>;
 
+    console.log('🔄 PUT /users/:id - Iniciando atualização');
+    console.log('👤 ID do usuário:', id);
+    console.log('📝 Body recebido:', JSON.stringify(body, null, 2));
+
     const updateData: Prisma.UserUpdateInput = { ...body } as Prisma.UserUpdateInput;
 
     const passwordValue = (body as any).password;
@@ -261,8 +265,21 @@ router.put('/:id', ensureSelfOrAdmin, async (req, res, next) => {
     // Tratar enderecosSalvos (plural) - para arrays de endereços
     if (Object.prototype.hasOwnProperty.call(body, 'enderecosSalvos')) {
       const raw = (body as any).enderecosSalvos as unknown;
+      console.log('🏠 enderecosSalvos encontrado:', JSON.stringify(raw, null, 2));
+      
+      // Verificar coordenadas especificamente
+      if (Array.isArray(raw)) {
+        raw.forEach((address, index) => {
+          console.log(`📍 Endereço ${index} coordenadas:`, {
+            latitude: address.latitude,
+            longitude: address.longitude
+          });
+        });
+      }
+      
       if (raw !== null && raw !== undefined) {
         (updateData as any).enderecosSalvos = raw as Prisma.InputJsonValue;
+        console.log('✅ enderecosSalvos adicionado ao updateData');
       }
     }
 
@@ -300,16 +317,21 @@ router.put('/:id', ensureSelfOrAdmin, async (req, res, next) => {
 
     delete (updateData as Record<string, unknown>).endereco;
 
+    console.log('💾 Dados para atualização:', JSON.stringify(updateData, null, 2));
+
     await prisma.user.update({
       where: { id },
       data: updateData,
     });
+
+    console.log('✅ Usuário atualizado no banco de dados');
 
     const user = await prisma.user.findUnique({
       where: { id },
       select: privateUserSelect,
     });
 
+    console.log('👤 Usuário retornado:', JSON.stringify(user, null, 2));
     res.json(serialize(user));
   } catch (error) {
     next(error);

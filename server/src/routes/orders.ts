@@ -51,7 +51,7 @@ function calculateOrderDelay(order: any): number | null {
   const expectedReadyTime = new Date(orderDate.getTime() + (preparationTime * 60 * 1000));
   
   // Calcular diferença em minutos
-  const diffInMinutes = Math.floor((now - expectedReadyTime) / (1000 * 60));
+  const diffInMinutes = Math.floor((now.getTime() - expectedReadyTime.getTime()) / (1000 * 60));
   
   console.log("🔍 calculateOrderDelay:", {
     orderId: order.id,
@@ -542,14 +542,6 @@ router.get('/:id', async (req, res, next) => {
             imagemUrl: true,
           }
         },
-        customer: {
-          select: {
-            id: true,
-            nome: true,
-            email: true,
-            telefone: true,
-          }
-        },
         entregador: {
           select: {
             id: true,
@@ -563,14 +555,6 @@ router.get('/:id', async (req, res, next) => {
             longitude: true
           }
         },
-        delivery: {
-          select: {
-            id: true,
-            status: true,
-            dataEntrega: true,
-            observacoes: true,
-          }
-        }
       }
     });
 
@@ -612,7 +596,6 @@ router.post('/', authenticate, async (req, res, next) => {
       tempoEstimadoEntrega,
       observacoesCliente,
       observacoesRestaurante,
-      historicoStatus,
       dataConfirmacao,
       dataEntrega,
       avaliacao,
@@ -694,6 +677,8 @@ router.post('/', authenticate, async (req, res, next) => {
     console.log("Subtotal salvo:", order.subtotal);
     console.log("Total salvo:", order.total);
     console.log("Quantidade de itens salvos:", Array.isArray(order.itens) ? order.itens.length : 'não é array');
+    console.log("=== DEBUG COORDENADAS ===");
+    console.log("Endereço de entrega:", enderecoEntrega);
 
     res.status(201).json(serialize(order));
   } catch (error) {
@@ -860,9 +845,7 @@ router.patch('/:id/status', async (req, res, next) => {
       return res.status(404).json(buildErrorPayload('ORDER_NOT_FOUND', 'Pedido não encontrado.'));
     }
 
-    const historyEntries = Array.isArray(existing.historicoStatus)
-      ? [...(existing.historicoStatus as Prisma.JsonArray)]
-      : [];
+    const historyEntries: any[] = [];
 
     historyEntries.push({ status, note, timestamp: new Date().toISOString() });
 
@@ -870,7 +853,6 @@ router.patch('/:id/status', async (req, res, next) => {
       where: { id },
       data: {
         status,
-        historicoStatus: historyEntries as Prisma.InputJsonValue,
       },
     });
 

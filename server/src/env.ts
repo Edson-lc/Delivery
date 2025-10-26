@@ -1,5 +1,7 @@
 ﻿import dotenv from 'dotenv';
 
+// Carregar variáveis de ambiente - tentar múltiplos arquivos
+dotenv.config({ path: '.env.local' });
 dotenv.config({ path: '.env' });
 
 // Debug: log das variáveis de ambiente
@@ -11,9 +13,14 @@ const NODE_ENV = process.env.NODE_ENV ?? 'development';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN ?? '1h';
 const BCRYPT_ROUNDS = Number(process.env.BCRYPT_ROUNDS ?? 12);
 const RATE_LIMIT_WINDOW_MS = Number(process.env.RATE_LIMIT_WINDOW_MS ?? 60000); // 1 minuto
-const RATE_LIMIT_MAX_REQUESTS = Number(process.env.RATE_LIMIT_MAX_REQUESTS ?? 1000); // 1000 requests por minuto
-const CORS_ORIGIN = process.env.CORS_ORIGIN ?? (NODE_ENV === 'production' ? '' : 'http://localhost:5173,http://localhost:5174');
+const RATE_LIMIT_MAX_REQUESTS = Number(process.env.RATE_LIMIT_MAX_REQUESTS ?? 10000); // 1000 requests por minuto
+const CORS_ORIGIN = process.env.CORS_ORIGIN ?? (NODE_ENV === 'production' ? '' : 'http://localhost:5173,http://localhost:5174,http://192.168.1.229:5173,http://192.168.1.229:5174');
 const LOG_LEVEL = process.env.LOG_LEVEL ?? 'info';
+
+// Stripe Configuration
+const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY ?? '';
+const STRIPE_PUBLISHABLE_KEY = process.env.STRIPE_PUBLISHABLE_KEY ?? '';
+const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET ?? '';
 
 const DEFAULT_DEV_JWT_SECRET = 'dev-secret-change-me-insecure-please-change-1234567890abcdefghijklmnopqrstuvwxyz';
 
@@ -49,6 +56,9 @@ export const env = {
   RATE_LIMIT_MAX_REQUESTS,
   CORS_ORIGIN,
   LOG_LEVEL,
+  STRIPE_SECRET_KEY,
+  STRIPE_PUBLISHABLE_KEY,
+  STRIPE_WEBHOOK_SECRET,
   IS_PRODUCTION: NODE_ENV === 'production',
   IS_DEVELOPMENT: NODE_ENV === 'development',
 };

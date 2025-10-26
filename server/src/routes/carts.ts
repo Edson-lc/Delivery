@@ -105,9 +105,9 @@ router.put('/:id', async (req, res, next) => {
     
     // Calcular subtotal se itens foram fornecidos
     if (data.itens && Array.isArray(data.itens)) {
-      const subtotal = data.itens.reduce((total, item) => {
+      const subtotal = data.itens.reduce((total: number, item: any) => {
         const itemTotal = (item.preco_unitario || 0) * (item.quantidade || 0);
-        const adicionaisTotal = (item.adicionais_selecionados || []).reduce((sum, add) => sum + (add.preco || 0), 0) * (item.quantidade || 0);
+        const adicionaisTotal = (item.adicionais_selecionados || []).reduce((sum: number, add: any) => sum + (add.preco || 0), 0) * (item.quantidade || 0);
         const personalizacoesTotal = (item.preco_personalizacoes || 0) * (item.quantidade || 0);
         return total + itemTotal + adicionaisTotal + personalizacoesTotal;
       }, 0);

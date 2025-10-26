@@ -244,6 +244,12 @@ router.post('/', async (req, res, next) => {
       return res.status(400).json(buildErrorPayload('VALIDATION_ERROR', 'email, nomeCompleto e telefone são obrigatórios.'));
     }
 
+    // Em desenvolvimento, aprovar automaticamente
+    if (process.env.NODE_ENV === 'development') {
+      data.aprovado = true;
+      console.log('🔧 Modo desenvolvimento: entregador aprovado automaticamente');
+    }
+
     const entregador = await prisma.entregador.create({ data });
     res.status(201).json(serialize(entregador));
   } catch (error) {
@@ -276,6 +282,26 @@ router.delete('/:id', async (req, res, next) => {
     next(error);
   }
 });
+
+// Rota para aprovar entregadores (apenas em desenvolvimento)
+if (process.env.NODE_ENV === 'development') {
+  router.post('/approve-all', async (req, res, next) => {
+    try {
+      const result = await prisma.entregador.updateMany({
+        where: { aprovado: false },
+        data: { aprovado: true }
+      });
+      
+      console.log(`🔧 Modo desenvolvimento: ${result.count} entregadores aprovados automaticamente`);
+      res.json({ 
+        message: `${result.count} entregadores aprovados automaticamente`,
+        count: result.count 
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+}
 
 export default router;
 

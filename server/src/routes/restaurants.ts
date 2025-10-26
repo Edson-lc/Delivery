@@ -114,7 +114,7 @@ router.post('/', async (req, res, next) => {
         email,
         tempoPreparo: tempo_preparo ?? tempoPreparo ?? 30,
         taxaEntrega: taxa_entrega ?? taxaEntrega ?? 5.00,
-        valorMinimo: valor_minimo ?? valorMinimo ?? pedidoMinimo ?? 20.00,
+        valorMinimo: valor_minimo ?? valorMinimo ?? 20.00,
         status: status || 'ativo',
         open: true,
         rating: avaliacao ?? 0,

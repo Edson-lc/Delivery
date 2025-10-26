@@ -332,7 +332,7 @@ router.get('/menu-items/categories', async (req, res, next) => {
     const categories = await prisma.menuItem.findMany({
       where: { 
         disponivel: true,
-        restaurant: { ativo: true }
+        restaurant: { status: 'ativo' }
       },
       select: { categoria: true },
       distinct: ['categoria'],
@@ -367,7 +367,7 @@ router.get('/menu-items/:id', async (req, res, next) => {
             telefone: true,
             tempoPreparo: true,
             taxaEntrega: true,
-            pedidoMinimo: true,
+            valorMinimo: true,
             rating: true,
             status: true,
             open: true

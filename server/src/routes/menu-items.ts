@@ -88,7 +88,11 @@ router.post('/', async (req, res, next) => {
     }
 
     // Mapear campos do frontend para o modelo
-    const data: Record<string, any> = {};
+    const data: any = {
+      nome: rawData.nome,
+      preco: rawData.preco,
+      restaurantId: rawData.restaurantId
+    };
     
     if (rawData.nome !== undefined) data.nome = rawData.nome;
     if (rawData.descricao !== undefined) data.descricao = rawData.descricao;
